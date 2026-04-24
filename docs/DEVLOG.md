@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-04-24 11:22 CST
+
+- Completed: removed the standalone `Preview Images` section from `README.md` while keeping the product screenshots near the top.
+- Modified files: `README.md`, `docs/DEVLOG.md`.
+- Tests/checks run: documentation-only change; checked README content with `sed`.
+- Current result: README no longer calls out preview image generation as a separate section.
+- Remaining issues: none.
+- Next step: keep README focused on user-facing install, usage, and project overview content.
+
 ## 2026-04-24 11:10 CST
 
 - Completed: replaced README preview assets with the approved popover and menu-bar compositions, and added an app language setting for Chinese or fully English UI.

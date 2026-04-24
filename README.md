@@ -56,14 +56,6 @@ swift build
 swift run CodexQuotaBar
 ```
 
-## Preview Images
-
-The README previews use sample data and can be regenerated with:
-
-```bash
-swift scripts/render_readme_screenshot.swift
-```
-
 ## How It Works
 
 Codex writes local JSONL session logs. Some lines include `payload.type == "token_count"` and carry:
