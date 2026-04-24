@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-04-24 11:01 CST
+
+- Completed: diagnosed why the language setting was not visible locally; the menu bar app was still running an old process from before the language-setting build.
+- Modified files: `docs/DEVLOG.md`.
+- Tests/checks run: checked `SettingsView.swift`; compared process start time with app binary modification time; restarted `CodexQuotaBar.app` with `open -n`; verified the running binary contains `Interface Language`.
+- Current result: local menu bar process is now the rebuilt app version, so Settings should show the language section.
+- Remaining issues: `Computer Use` still cannot inspect the LSUIElement menu bar app window directly, so final visual confirmation needs a manual click.
+- Next step: open Settings from the menu bar item and confirm the `语言 / Language` section appears between refresh and behavior.
+
 ## 2026-04-24 11:22 CST
 
 - Completed: removed the standalone `Preview Images` section from `README.md` while keeping the product screenshots near the top.
