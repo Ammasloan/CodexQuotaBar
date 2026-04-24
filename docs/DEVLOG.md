@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-04-24 11:04 CST
+
+- Completed: replaced README showcase images with separate English and Chinese popover previews based on the latest approved screenshots.
+- Modified files: `README.md`, `CHANGELOG.md`, `docs/assets/codexquotabar-preview-en.png`, `docs/assets/codexquotabar-preview-zh.png`, `docs/assets/codexquotabar-preview.png`, `scripts/render_readme_screenshot.swift`, `docs/DEVLOG.md`.
+- Tests/checks run: `swift scripts/render_readme_screenshot.swift`; visually inspected both generated PNG assets.
+- Current result: README now shows the English preview first and the Chinese preview second.
+- Remaining issues: old unused menu-bar preview asset remains in the repository to avoid deleting tracked files without an explicit delete request.
+- Next step: if desired, explicitly remove unused legacy preview assets in a cleanup commit.
+
 ## 2026-04-24 11:01 CST
 
 - Completed: diagnosed why the language setting was not visible locally; the menu bar app was still running an old process from before the language-setting build.

@@ -5,11 +5,11 @@ CodexQuotaBar is a lightweight macOS menu bar app for keeping an eye on local Co
 The app is designed for quick scanning: the menu bar item shows the remaining 5-hour quota, and the popover opens to the two quota windows that matter most: 5 hours and 7 days.
 
 <p>
-  <img src="docs/assets/codexquotabar-preview.png" width="450" alt="CodexQuotaBar quota popover">
+  <img src="docs/assets/codexquotabar-preview-en.png" width="440" alt="CodexQuotaBar English quota popover">
 </p>
 
 <p>
-  <img src="docs/assets/codexquotabar-menubar.png" width="104" alt="CodexQuotaBar menu bar item">
+  <img src="docs/assets/codexquotabar-preview-zh.png" width="440" alt="CodexQuotaBar Chinese quota popover">
 </p>
 
 ## Features

@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Added a language setting with Chinese and English interface modes.
-- Updated README previews to show the current popover and menu bar item.
+- Updated README previews to show English and Chinese popover examples.
 
 ## 1.0.0
 

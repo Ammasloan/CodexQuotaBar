@@ -14,10 +14,107 @@ struct Canvas {
     }
 }
 
-let popoverCanvas = Canvas(width: 450, height: 570)
-let menuBarCanvas = Canvas(width: 104, height: 32)
-let popoverURL = URL(fileURLWithPath: "docs/assets/codexquotabar-preview.png")
-let menuBarURL = URL(fileURLWithPath: "docs/assets/codexquotabar-menubar.png")
+enum PreviewLanguage {
+    case english
+    case chinese
+}
+
+struct PreviewCopy {
+    let title: String
+    let subtitle: String
+    let quotaTitle: String
+    let fiveHourTitle: String
+    let fiveHourRemaining: String
+    let fiveHourUsed: String
+    let fiveHourReset: String
+    let fiveHourResetAt: String
+    let sevenDayTitle: String
+    let sevenDayRemaining: String
+    let sevenDayUsed: String
+    let sevenDayReset: String
+    let sevenDayResetAt: String
+    let usageTitle: String
+    let fiveHourTokensTitle: String
+    let fiveHourTokensDetail: String
+    let fiveHourTokensValue: String
+    let latestRequestTitle: String
+    let latestRequestDetail: String
+    let latestRequestValue: String
+    let sessionTotalTitle: String
+    let sessionTotalDetail: String
+    let sessionTotalValue: String
+    let logsButton: String
+    let instancesButton: String
+    let quitButton: String
+
+    static func copy(for language: PreviewLanguage) -> PreviewCopy {
+        switch language {
+        case .english:
+            PreviewCopy(
+                title: "Codex Usage",
+                subtitle: "Pro Lite  ·  gpt-5.5  ·  Updated 2s ago",
+                quotaTitle: "Quota",
+                fiveHourTitle: "5-Hour Quota",
+                fiveHourRemaining: "81% left",
+                fiveHourUsed: "Used 19%",
+                fiveHourReset: "Resets 3h 43m",
+                fiveHourResetAt: "2:45 PM",
+                sevenDayTitle: "7-Day Quota",
+                sevenDayRemaining: "77% left",
+                sevenDayUsed: "Used 23%",
+                sevenDayReset: "Resets 118h 29m",
+                sevenDayResetAt: "9:31 AM",
+                usageTitle: "Recent Usage",
+                fiveHourTokensTitle: "Last 5 Hours Tokens",
+                fiveHourTokensDetail: "Input 21.0M · Output 96.0k",
+                fiveHourTokensValue: "21.1M",
+                latestRequestTitle: "Latest Request",
+                latestRequestDetail: "Input 97.6k · Output 37",
+                latestRequestValue: "97.7k",
+                sessionTotalTitle: "Current Session Total",
+                sessionTotalDetail: "Input 25.0M · Output 112.4k",
+                sessionTotalValue: "25.1M",
+                logsButton: "Logs",
+                instancesButton: "Instances",
+                quitButton: "Quit"
+            )
+        case .chinese:
+            PreviewCopy(
+                title: "Codex 使用情况",
+                subtitle: "Pro Lite  ·  gpt-5.5  ·  更新于 10 秒前",
+                quotaTitle: "额度",
+                fiveHourTitle: "5 小时额度",
+                fiveHourRemaining: "剩余 81%",
+                fiveHourUsed: "已用 19%",
+                fiveHourReset: "重置 3h 43m",
+                fiveHourResetAt: "14:45",
+                sevenDayTitle: "7 天额度",
+                sevenDayRemaining: "剩余 77%",
+                sevenDayUsed: "已用 23%",
+                sevenDayReset: "重置 118h 29m",
+                sevenDayResetAt: "09:31",
+                usageTitle: "最近使用",
+                fiveHourTokensTitle: "最近 5 小时 Token",
+                fiveHourTokensDetail: "输入 21.2M · 输出 96.5k",
+                fiveHourTokensValue: "21.3M",
+                latestRequestTitle: "最近一次请求",
+                latestRequestDetail: "输入 98.2k · 输出 275",
+                latestRequestValue: "98.4k",
+                sessionTotalTitle: "当前会话累计",
+                sessionTotalDetail: "输入 25.2M · 输出 112.8k",
+                sessionTotalValue: "25.3M",
+                logsButton: "日志",
+                instancesButton: "多开",
+                quitButton: "退出"
+            )
+        }
+    }
+}
+
+let canvas = Canvas(width: 440, height: 560)
+let englishURL = URL(fileURLWithPath: "docs/assets/codexquotabar-preview-en.png")
+let chineseURL = URL(fileURLWithPath: "docs/assets/codexquotabar-preview-zh.png")
+let legacyURL = URL(fileURLWithPath: "docs/assets/codexquotabar-preview.png")
 
 func rounded(_ rect: NSRect, radius: CGFloat) -> NSBezierPath {
     NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
@@ -59,12 +156,12 @@ func drawText(
     (text as NSString).draw(in: rect, withAttributes: attributes)
 }
 
-func drawRing(center: CGPoint, radius: CGFloat, lineWidth: CGFloat, fraction: CGFloat, accent: NSColor, trackAlpha: CGFloat = 0.12) {
+func drawRing(center: CGPoint, radius: CGFloat, lineWidth: CGFloat, fraction: CGFloat, accent: NSColor) {
     guard let context = NSGraphicsContext.current?.cgContext else { return }
     context.saveGState()
     context.setLineWidth(lineWidth)
     context.setLineCap(.round)
-    context.setStrokeColor(NSColor.labelColor.withAlphaComponent(trackAlpha).cgColor)
+    context.setStrokeColor(NSColor.labelColor.withAlphaComponent(0.08).cgColor)
     context.addArc(center: center, radius: radius, startAngle: 0, endAngle: CGFloat.pi * 2, clockwise: false)
     context.strokePath()
 
@@ -76,38 +173,59 @@ func drawRing(center: CGPoint, radius: CGFloat, lineWidth: CGFloat, fraction: CG
     context.restoreGState()
 }
 
-func drawGlassPanel(_ rect: NSRect, radius: CGFloat) {
+func drawCodexMark(center: CGPoint, radius: CGFloat) {
+    guard let context = NSGraphicsContext.current?.cgContext else { return }
+    context.saveGState()
+    context.setFillColor(NSColor.systemGreen.cgColor)
+
+    for index in 0..<6 {
+        let angle = CGFloat(index) * CGFloat.pi / 3
+        let dotCenter = CGPoint(
+            x: center.x + cos(angle) * radius * 0.46,
+            y: center.y + sin(angle) * radius * 0.46
+        )
+        context.fillEllipse(in: CGRect(x: dotCenter.x - radius * 0.15, y: dotCenter.y - radius * 0.15, width: radius * 0.30, height: radius * 0.30))
+    }
+
+    context.fillEllipse(in: CGRect(x: center.x - radius * 0.13, y: center.y - radius * 0.13, width: radius * 0.26, height: radius * 0.26))
+    context.restoreGState()
+}
+
+func drawGlassShell(_ canvas: Canvas) {
+    NSGradient(colors: [
+        NSColor(calibratedRed: 0.83, green: 0.72, blue: 0.92, alpha: 1),
+        NSColor(calibratedRed: 0.95, green: 0.96, blue: 0.98, alpha: 1),
+    ])?.draw(in: NSRect(origin: .zero, size: canvas.size), angle: -85)
+
     let shadow = NSShadow()
-    shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
+    shadow.shadowColor = NSColor.black.withAlphaComponent(0.22)
     shadow.shadowBlurRadius = 22
     shadow.shadowOffset = NSSize(width: 0, height: -8)
 
-    fillRounded(
-        rect,
-        radius: radius,
-        fill: NSColor(calibratedWhite: 0.98, alpha: 0.90),
-        stroke: NSColor.white.withAlphaComponent(0.85),
-        lineWidth: 1,
-        shadow: shadow
-    )
-
+    let panel = canvas.rect(0, 3, 440, 557)
+    fillRounded(panel, radius: 18, fill: NSColor(calibratedWhite: 0.98, alpha: 0.92), stroke: NSColor.white.withAlphaComponent(0.90), shadow: shadow)
     NSGradient(colors: [
-        NSColor.white.withAlphaComponent(0.70),
-        NSColor(calibratedRed: 0.90, green: 0.93, blue: 0.95, alpha: 0.58),
-        NSColor(calibratedRed: 0.82, green: 0.87, blue: 0.90, alpha: 0.40),
-    ])?.draw(in: rounded(rect.insetBy(dx: 1, dy: 1), radius: radius - 1), angle: -90)
+        NSColor.white.withAlphaComponent(0.76),
+        NSColor(calibratedRed: 0.91, green: 0.92, blue: 0.95, alpha: 0.58),
+        NSColor(calibratedRed: 0.80, green: 0.84, blue: 0.87, alpha: 0.36),
+    ])?.draw(in: rounded(panel.insetBy(dx: 1, dy: 1), radius: 17), angle: -90)
 }
 
-func drawSection(_ canvas: Canvas, x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, title: String) -> NSRect {
+func drawHeader(_ canvas: Canvas, copy: PreviewCopy) {
+    drawCodexMark(center: CGPoint(x: 27, y: canvas.height - 29), radius: 17)
+    drawText(copy.title, in: canvas.rect(52, 16, 190, 20), size: 16, weight: .bold)
+    drawText(copy.subtitle, in: canvas.rect(52, 38, 260, 16), size: 11, color: .secondaryLabelColor)
+
+    fillRounded(canvas.rect(311, 10, 54, 37), radius: 7, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.86))
+    fillRounded(canvas.rect(374, 10, 52, 37), radius: 7, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.86))
+    drawText("↻", in: canvas.rect(329, 18, 18, 20), size: 20, weight: .medium, alignment: .center)
+    drawText("⚙", in: canvas.rect(390, 18, 20, 20), size: 18, weight: .medium, alignment: .center)
+}
+
+func drawSection(_ canvas: Canvas, x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, title: String) {
     let rect = canvas.rect(x, y, width, height)
-    fillRounded(
-        rect,
-        radius: 14,
-        fill: NSColor.white.withAlphaComponent(0.62),
-        stroke: NSColor.white.withAlphaComponent(0.90)
-    )
+    fillRounded(rect, radius: 14, fill: NSColor.white.withAlphaComponent(0.62), stroke: NSColor.white.withAlphaComponent(0.90))
     drawText(title, in: canvas.rect(x + 12, y + 13, width - 24, 18), size: 12, weight: .semibold, color: .secondaryLabelColor)
-    return rect
 }
 
 func drawQuotaRow(
@@ -123,129 +241,86 @@ func drawQuotaRow(
     accent: NSColor,
     tint: NSColor
 ) {
-    let row = canvas.rect(30, y, 390, 82)
-    fillRounded(row, radius: 11, fill: tint, stroke: accent.withAlphaComponent(0.16))
+    let row = canvas.rect(26, y, 388, 81)
+    fillRounded(row, radius: 11, fill: tint, stroke: accent.withAlphaComponent(0.14))
 
-    let ringCenter = CGPoint(x: row.minX + 38, y: row.midY)
-    drawRing(center: ringCenter, radius: 28, lineWidth: 7, fraction: fraction, accent: accent, trackAlpha: 0.08)
+    let ringCenter = CGPoint(x: row.minX + 39, y: row.midY)
+    drawRing(center: ringCenter, radius: 28, lineWidth: 7, fraction: fraction, accent: accent)
     drawText(number, in: NSRect(x: ringCenter.x - 20, y: ringCenter.y - 12, width: 40, height: 24), size: 20, weight: .bold, alignment: .center)
 
-    drawText(title, in: NSRect(x: row.minX + 84, y: row.maxY - 31, width: 150, height: 20), size: 14, weight: .bold)
-    drawText("剩余 \(remaining)", in: NSRect(x: row.maxX - 102, y: row.maxY - 31, width: 90, height: 20), size: 14, weight: .bold, color: accent, alignment: .right)
+    drawText(title, in: NSRect(x: row.minX + 84, y: row.maxY - 31, width: 155, height: 20), size: 14, weight: .bold)
+    drawText(remaining, in: NSRect(x: row.maxX - 112, y: row.maxY - 31, width: 100, height: 20), size: 14, weight: .bold, color: accent, alignment: .right)
 
-    let bar = NSRect(x: row.minX + 84, y: row.midY - 2, width: row.width - 130, height: 5)
+    let bar = NSRect(x: row.minX + 84, y: row.midY - 2, width: row.width - 128, height: 5)
     fillRounded(bar, radius: 3, fill: NSColor.labelColor.withAlphaComponent(0.08))
     fillRounded(NSRect(x: bar.minX, y: bar.minY, width: bar.width * fraction, height: bar.height), radius: 3, fill: accent)
 
-    drawText("已用 \(used)", in: NSRect(x: row.minX + 84, y: row.minY + 14, width: 70, height: 16), size: 11, color: .secondaryLabelColor)
-    drawText("重置 \(reset)", in: NSRect(x: row.minX + 154, y: row.minY + 14, width: 120, height: 16), size: 11, color: .secondaryLabelColor)
-    drawText(resetAt, in: NSRect(x: row.maxX - 54, y: row.minY + 14, width: 42, height: 16), size: 11, color: .secondaryLabelColor, alignment: .right)
+    drawText(used, in: NSRect(x: row.minX + 84, y: row.minY + 13, width: 78, height: 16), size: 11, color: .secondaryLabelColor)
+    drawText(reset, in: NSRect(x: row.minX + 162, y: row.minY + 13, width: 132, height: 16), size: 11, color: .secondaryLabelColor)
+    drawText(resetAt, in: NSRect(x: row.maxX - 72, y: row.minY + 13, width: 60, height: 16), size: 11, color: .secondaryLabelColor, alignment: .right)
 }
 
 func drawMetricRow(_ canvas: Canvas, y: CGFloat, title: String, detail: String, value: String) {
-    let row = canvas.rect(30, y, 390, 53)
+    let row = canvas.rect(26, y, 388, 51)
     fillRounded(row, radius: 10, fill: NSColor(calibratedWhite: 0.97, alpha: 0.72), stroke: NSColor.white.withAlphaComponent(0.80))
-    drawText(title, in: NSRect(x: row.minX + 10, y: row.maxY - 27, width: 210, height: 18), size: 13, weight: .bold)
-    drawText(detail, in: NSRect(x: row.minX + 10, y: row.minY + 11, width: 250, height: 16), size: 10.5, color: .secondaryLabelColor)
-    drawText(value, in: NSRect(x: row.maxX - 105, y: row.midY - 13, width: 92, height: 26), size: 20, weight: .bold, alignment: .right)
+    drawText(title, in: NSRect(x: row.minX + 10, y: row.maxY - 27, width: 220, height: 18), size: 13, weight: .bold)
+    drawText(detail, in: NSRect(x: row.minX + 10, y: row.minY + 10, width: 250, height: 16), size: 10.5, color: .secondaryLabelColor)
+    drawText(value, in: NSRect(x: row.maxX - 106, y: row.midY - 13, width: 92, height: 26), size: 20, weight: .bold, alignment: .right)
 }
 
-func drawCodexMark(center: CGPoint, radius: CGFloat, color: NSColor) {
-    guard let context = NSGraphicsContext.current?.cgContext else { return }
-    context.saveGState()
-    context.setFillColor(color.cgColor)
-    for index in 0..<6 {
-        let angle = CGFloat(index) * CGFloat.pi / 3
-        let dotCenter = CGPoint(
-            x: center.x + cos(angle) * radius * 0.48,
-            y: center.y + sin(angle) * radius * 0.48
-        )
-        context.fillEllipse(in: CGRect(x: dotCenter.x - radius * 0.16, y: dotCenter.y - radius * 0.16, width: radius * 0.32, height: radius * 0.32))
+func drawToolbar(_ canvas: Canvas, copy: PreviewCopy) {
+    let toolbar = canvas.rect(14, 493, 412, 54)
+    fillRounded(toolbar, radius: 12, fill: NSColor(calibratedWhite: 0.94, alpha: 0.88), stroke: NSColor.white.withAlphaComponent(0.88))
+
+    let items = [("▱  \(copy.logsButton)", 14.0), ("◫  \(copy.instancesButton)", 154.0), ("⏻  \(copy.quitButton)", 294.0)]
+    for item in items {
+        fillRounded(canvas.rect(item.1, 508, 132, 38), radius: 6, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.84))
+        drawText(item.0, in: canvas.rect(item.1, 520, 132, 15), size: 12, weight: .medium, alignment: .center)
     }
-    context.fillEllipse(in: CGRect(x: center.x - radius * 0.14, y: center.y - radius * 0.14, width: radius * 0.28, height: radius * 0.28))
-    context.restoreGState()
 }
 
-func renderPopover() -> NSImage {
-    let canvas = popoverCanvas
+func renderPreview(language: PreviewLanguage) -> NSImage {
+    let copy = PreviewCopy.copy(for: language)
     let image = NSImage(size: canvas.size)
     image.lockFocus()
 
-    NSGradient(colors: [
-        NSColor(calibratedRed: 0.86, green: 0.74, blue: 0.93, alpha: 1),
-        NSColor(calibratedRed: 0.95, green: 0.96, blue: 0.98, alpha: 1),
-    ])?.draw(in: NSRect(origin: .zero, size: canvas.size), angle: -80)
+    drawGlassShell(canvas)
+    drawHeader(canvas, copy: copy)
 
-    let panel = canvas.rect(4, 5, 442, 560)
-    drawGlassPanel(panel, radius: 18)
-
-    drawCodexMark(center: CGPoint(x: 31, y: canvas.height - 31), radius: 17, color: .systemGreen)
-    drawText("Codex 使用情况", in: canvas.rect(56, 18, 180, 20), size: 16, weight: .bold)
-    drawText("Pro Lite  ·  gpt-5.5  ·  更新于 3 分钟前", in: canvas.rect(56, 40, 230, 16), size: 11, color: .secondaryLabelColor)
-
-    fillRounded(canvas.rect(316, 14, 52, 37), radius: 7, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.86))
-    fillRounded(canvas.rect(378, 14, 52, 37), radius: 7, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.86))
-    drawText("↻", in: canvas.rect(333, 22, 18, 20), size: 20, weight: .medium, alignment: .center)
-    drawText("⚙", in: canvas.rect(394, 22, 20, 20), size: 18, weight: .medium, alignment: .center)
-
-    _ = drawSection(canvas, x: 18, y: 76, width: 412, height: 221, title: "额度")
+    drawSection(canvas, x: 14, y: 71, width: 412, height: 222, title: copy.quotaTitle)
     drawQuotaRow(
         canvas,
-        y: 112,
-        title: "5 小时额度",
-        number: "89",
-        remaining: "89%",
-        used: "11%",
-        reset: "3h 59m",
-        resetAt: "14:45",
-        fraction: 0.89,
+        y: 107,
+        title: copy.fiveHourTitle,
+        number: "81",
+        remaining: copy.fiveHourRemaining,
+        used: copy.fiveHourUsed,
+        reset: copy.fiveHourReset,
+        resetAt: copy.fiveHourResetAt,
+        fraction: 0.81,
         accent: .systemGreen,
         tint: NSColor(calibratedRed: 0.88, green: 0.96, blue: 0.90, alpha: 0.78)
     )
     drawQuotaRow(
         canvas,
-        y: 204,
-        title: "7 天额度",
-        number: "78",
-        remaining: "78%",
-        used: "22%",
-        reset: "118h 45m",
-        resetAt: "9:31",
-        fraction: 0.78,
+        y: 200,
+        title: copy.sevenDayTitle,
+        number: "77",
+        remaining: copy.sevenDayRemaining,
+        used: copy.sevenDayUsed,
+        reset: copy.sevenDayReset,
+        resetAt: copy.sevenDayResetAt,
+        fraction: 0.77,
         accent: .systemBlue,
-        tint: NSColor(calibratedRed: 0.87, green: 0.93, blue: 0.99, alpha: 0.80)
+        tint: NSColor(calibratedRed: 0.87, green: 0.93, blue: 0.99, alpha: 0.82)
     )
 
-    _ = drawSection(canvas, x: 18, y: 311, width: 412, height: 206, title: "最近使用")
-    drawMetricRow(canvas, y: 347, title: "最近 5 小时 Token", detail: "输入 15.7M · 输出 60.7k", value: "15.8M")
-    drawMetricRow(canvas, y: 405, title: "最近一次请求", detail: "输入 39.5k · 输出 804", value: "40.3k")
-    drawMetricRow(canvas, y: 463, title: "当前会话累计", detail: "输入 19.9M · 输出 74.2k", value: "20.0M")
+    drawSection(canvas, x: 14, y: 306, width: 412, height: 210, title: copy.usageTitle)
+    drawMetricRow(canvas, y: 342, title: copy.fiveHourTokensTitle, detail: copy.fiveHourTokensDetail, value: copy.fiveHourTokensValue)
+    drawMetricRow(canvas, y: 403, title: copy.latestRequestTitle, detail: copy.latestRequestDetail, value: copy.latestRequestValue)
+    drawMetricRow(canvas, y: 464, title: copy.sessionTotalTitle, detail: copy.sessionTotalDetail, value: copy.sessionTotalValue)
 
-    let toolbar = canvas.rect(18, 500, 412, 52)
-    fillRounded(toolbar, radius: 12, fill: NSColor(calibratedWhite: 0.94, alpha: 0.86), stroke: NSColor.white.withAlphaComponent(0.88))
-    let buttonWidth: CGFloat = 130
-    for (index, item) in [("▱  日志", 0), ("◫  多开", 1), ("⏻  退出", 2)] {
-        let x = 20 + CGFloat(item) * (buttonWidth + 10)
-        fillRounded(canvas.rect(x, 513, buttonWidth, 37), radius: 6, fill: NSColor.white.withAlphaComponent(0.78), stroke: NSColor.white.withAlphaComponent(0.84))
-        drawText(index, in: canvas.rect(x, 524, buttonWidth, 15), size: 12, weight: .medium, alignment: .center)
-    }
-
-    image.unlockFocus()
-    return image
-}
-
-func renderMenuBar() -> NSImage {
-    let canvas = menuBarCanvas
-    let image = NSImage(size: canvas.size)
-    image.lockFocus()
-
-    fillRounded(NSRect(origin: .zero, size: canvas.size), radius: 0, fill: NSColor(calibratedRed: 0.86, green: 0.87, blue: 0.89, alpha: 1))
-    drawRing(center: CGPoint(x: 20, y: canvas.height - 16), radius: 7.2, lineWidth: 2.2, fraction: 0.89, accent: .systemGreen, trackAlpha: 0.18)
-    drawText("89%", in: canvas.rect(31, 8, 31, 16), size: 11, weight: .semibold)
-
-    let iconRect = canvas.rect(76, 7, 17, 17)
-    fillRounded(iconRect, radius: 5, fill: NSColor(calibratedWhite: 0.08, alpha: 1))
-    drawText("›", in: canvas.rect(80, 7, 8, 17), size: 14, weight: .bold, color: .white, alignment: .center)
+    drawToolbar(canvas, copy: copy)
 
     image.unlockFocus()
     return image
@@ -262,7 +337,12 @@ func writePNG(_ image: NSImage, to url: URL) throws {
     try png.write(to: url)
 }
 
-try writePNG(renderPopover(), to: popoverURL)
-try writePNG(renderMenuBar(), to: menuBarURL)
-print(popoverURL.path)
-print(menuBarURL.path)
+let english = renderPreview(language: .english)
+let chinese = renderPreview(language: .chinese)
+
+try writePNG(english, to: englishURL)
+try writePNG(chinese, to: chineseURL)
+try writePNG(chinese, to: legacyURL)
+
+print(englishURL.path)
+print(chineseURL.path)
