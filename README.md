@@ -4,6 +4,8 @@ CodexQuotaBar is a lightweight macOS menu bar app for keeping an eye on local Co
 
 The app is designed for quick scanning: the menu bar item shows the remaining 5-hour quota, and the popover opens to the two quota windows that matter most: 5 hours and 7 days.
 
+![CodexQuotaBar preview](docs/assets/codexquotabar-preview.png)
+
 ## Features
 
 - Menu bar ring icon with remaining 5-hour quota.
@@ -45,6 +47,14 @@ For development builds:
 ```bash
 swift build
 swift run CodexQuotaBar
+```
+
+## Preview Image
+
+The README preview uses sample data and can be regenerated with:
+
+```bash
+swift scripts/render_readme_screenshot.swift
 ```
 
 ## How It Works

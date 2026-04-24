@@ -1,7 +1,6 @@
 .DS_Store
 /.build
 /dist
-/Scripts
 /Packages
 xcuserdata/
 DerivedData/
