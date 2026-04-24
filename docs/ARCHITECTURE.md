@@ -7,7 +7,7 @@ CodexQuotaBar is a small Swift Package executable that runs as a macOS menu bar 
 - `App/`: app lifecycle, menu bar item, popover behavior, context menu, settings window coordination.
 - `Data/`: local Codex log scanning, usage aggregation, observable store, and data models.
 - `UI/`: SwiftUI popover, settings view, and menu bar ring rendering.
-- `Support/`: user preferences and single-instance cleanup helpers.
+- `Support/`: user preferences, lightweight UI copy localization, and single-instance cleanup helpers.
 
 ## Data Flow
 
@@ -24,6 +24,7 @@ CodexQuotaBar is a small Swift Package executable that runs as a macOS menu bar 
 - Right-click or Control-click to open the context menu.
 - Clicking outside the popover closes it via local/global event monitoring.
 - Launching the app can terminate other `CodexQuotaBar` instances to avoid duplicate menu bar icons.
+- The language setting is stored in `UserDefaults` and updates the popover, settings window, context menu, and tooltip text.
 
 ## Build Output
 

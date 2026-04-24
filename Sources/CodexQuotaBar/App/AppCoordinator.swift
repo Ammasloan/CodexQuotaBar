@@ -11,6 +11,10 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     private var settingsWindowController: NSWindowController?
     private var globalClickMonitor: Any?
     private var localClickMonitor: Any?
+    private var text: AppText {
+        AppText(AppPreferences.language)
+    }
+
     private lazy var hostingController = NSHostingController(
         rootView: QuotaPopoverView(
             store: store,
@@ -21,18 +25,19 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             onQuit: { NSApp.terminate(nil) }
         )
     )
-    private lazy var contextMenu: NSMenu = {
+
+    private func makeContextMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
-        menu.addItem(NSMenuItem(title: "设置…", action: #selector(openSettingsFromMenu), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "刷新", action: #selector(refreshFromMenu), keyEquivalent: "r"))
-        menu.addItem(NSMenuItem(title: "打开日志", action: #selector(openLogsFromMenu), keyEquivalent: "l"))
-        menu.addItem(NSMenuItem(title: "关闭其他实例", action: #selector(closeOtherInstancesFromMenu), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: text.settingsMenuTitle, action: #selector(openSettingsFromMenu), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: text.refreshMenuTitle, action: #selector(refreshFromMenu), keyEquivalent: "r"))
+        menu.addItem(NSMenuItem(title: text.openLogsMenuTitle, action: #selector(openLogsFromMenu), keyEquivalent: "l"))
+        menu.addItem(NSMenuItem(title: text.closeOtherInstancesMenuTitle, action: #selector(closeOtherInstancesFromMenu), keyEquivalent: ""))
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "退出", action: #selector(quitFromMenu), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: text.quitMenuTitle, action: #selector(quitFromMenu), keyEquivalent: "q"))
         menu.items.forEach { $0.target = self }
         return menu
-    }()
+    }
 
     func start() {
         if AppPreferences.autoCloseOtherInstances {
@@ -81,6 +86,13 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
                 self?.updateStatusItem(with: snapshot)
             }
             .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: AppPreferences.didChangeNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.applyLocalizedChrome()
+            }
+            .store(in: &cancellables)
     }
 
     private func updateStatusItem(with snapshot: CodexSnapshot) {
@@ -90,7 +102,12 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
 
         button.image = RingImageRenderer.makeStatusImage(for: snapshot)
         button.title = snapshot.primaryQuota.compactRemainingLabel
-        button.toolTip = snapshot.tooltipText
+        button.toolTip = snapshot.tooltipText(language: AppPreferences.language)
+    }
+
+    private func applyLocalizedChrome() {
+        updateStatusItem(with: store.snapshot)
+        settingsWindowController?.window?.title = text.settingsWindowTitle
     }
 
     private func openLogsFolder() {
@@ -128,7 +145,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     private func showContextMenu() {
         popover.performClose(nil)
         stopOutsideClickMonitoring()
-        statusItem.menu = contextMenu
+        statusItem.menu = makeContextMenu()
         statusItem.button?.performClick(nil)
     }
 
@@ -202,8 +219,8 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         } else {
             let hostingController = NSHostingController(rootView: rootView)
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "设置"
-            window.setContentSize(NSSize(width: 420, height: 300))
+            window.title = text.settingsWindowTitle
+            window.setContentSize(NSSize(width: 440, height: 390))
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.titlebarAppearsTransparent = true
             window.toolbarStyle = .preference
@@ -211,6 +228,8 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             settingsWindowController = NSWindowController(window: window)
         }
 
+        settingsWindowController?.window?.title = text.settingsWindowTitle
+        settingsWindowController?.window?.setContentSize(NSSize(width: 440, height: 390))
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)

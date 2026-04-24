@@ -3,6 +3,8 @@ import SwiftUI
 
 struct QuotaPopoverView: View {
     @ObservedObject var store: CodexUsageStore
+    @AppStorage(AppPreferences.Keys.language) private var languageCode = AppLanguage.defaultLanguage.rawValue
+
     let onRefresh: () -> Void
     let onOpenSettings: () -> Void
     let onOpenLogs: () -> Void
@@ -11,6 +13,14 @@ struct QuotaPopoverView: View {
 
     private var snapshot: CodexSnapshot {
         store.snapshot
+    }
+
+    private var language: AppLanguage {
+        AppLanguage.resolved(languageCode)
+    }
+
+    private var text: AppText {
+        AppText(language)
     }
 
     private var fiveHourAccent: Color {
@@ -65,12 +75,12 @@ struct QuotaPopoverView: View {
                 .glassSurface(cornerRadius: 14, tint: fiveHourAccent.opacity(0.18))
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Codex 使用情况")
+                Text(text.codexUsageTitle)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
-                Text(snapshot.subtitleLine)
+                Text(snapshot.subtitleLine(language: language))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -79,8 +89,8 @@ struct QuotaPopoverView: View {
 
             Spacer(minLength: 8)
 
-            iconButton(systemImage: "arrow.clockwise", label: "刷新", action: onRefresh)
-            iconButton(systemImage: "gearshape", label: "设置", action: onOpenSettings)
+            iconButton(systemImage: "arrow.clockwise", label: text.refreshHelp, action: onRefresh)
+            iconButton(systemImage: "gearshape", label: text.settingsHelp, action: onOpenSettings)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -103,16 +113,16 @@ struct QuotaPopoverView: View {
     }
 
     private var quotaSection: some View {
-        panel(title: "额度") {
+        panel(title: text.quotaSectionTitle) {
             VStack(spacing: 10) {
                 quotaRow(
-                    title: "5 小时额度",
+                    title: text.fiveHourQuotaTitle,
                     quota: snapshot.primaryQuota,
                     accent: fiveHourAccent
                 )
 
                 quotaRow(
-                    title: "7 天额度",
+                    title: text.sevenDayQuotaTitle,
                     quota: snapshot.secondaryQuota,
                     accent: weekAccent
                 )
@@ -147,7 +157,7 @@ struct QuotaPopoverView: View {
 
                     Spacer(minLength: 8)
 
-                    Text("剩余 \(quota.compactRemainingLabel)")
+                    Text(text.remaining(quota.compactRemainingLabel))
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(accent)
                         .monospacedDigit()
@@ -159,10 +169,10 @@ struct QuotaPopoverView: View {
                     .controlSize(.small)
 
                 HStack(spacing: 8) {
-                    Text("已用 \(quota.compactUsedLabel)")
-                    Text("重置 \(quota.resetCountdown(from: snapshot.refreshedAt))")
+                    Text(text.used(quota.compactUsedLabel))
+                    Text(text.reset(quota.resetCountdown(from: snapshot.refreshedAt, language: language)))
                     Spacer(minLength: 4)
-                    Text(quota.resetAbsoluteText)
+                    Text(quota.resetAbsoluteText(language: language))
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -176,23 +186,28 @@ struct QuotaPopoverView: View {
     }
 
     private var usageSection: some View {
-        panel(title: "最近使用") {
+        panel(title: text.usageSectionTitle) {
             VStack(spacing: 8) {
                 metricRow(
-                    title: "最近 5 小时 Token",
+                    title: text.recentFiveHourTokensTitle,
                     value: MetricFormatters.abbreviatedTokens(snapshot.fiveHourTokens.totalTokens),
-                    detail: "输入 \(MetricFormatters.abbreviatedTokens(snapshot.fiveHourTokens.inputTokens)) · 输出 \(MetricFormatters.abbreviatedTokens(snapshot.fiveHourTokens.outputTokens))"
+                    detail: text.inputOutputDetail(
+                        input: snapshot.fiveHourTokens.inputTokens,
+                        output: snapshot.fiveHourTokens.outputTokens
+                    )
                 )
 
                 metricRow(
-                    title: "最近一次请求",
-                    value: snapshot.lastRequestTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? "暂无",
-                    detail: snapshot.lastRequestTokens.map { "输入 \(MetricFormatters.abbreviatedTokens($0.inputTokens)) · 输出 \(MetricFormatters.abbreviatedTokens($0.outputTokens))" } ?? "等待新的请求数据"
+                    title: text.latestRequestTitle,
+                    value: snapshot.lastRequestTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? text.noData,
+                    detail: snapshot.lastRequestTokens.map {
+                        text.inputOutputDetail(input: $0.inputTokens, output: $0.outputTokens)
+                    } ?? text.waitingForRequestData
                 )
 
                 metricRow(
-                    title: "当前会话累计",
-                    value: snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? "暂无",
+                    title: text.currentSessionTotalTitle,
+                    value: snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? text.noData,
                     detail: sessionDetailText
                 )
             }
@@ -200,20 +215,20 @@ struct QuotaPopoverView: View {
     }
 
     private var detailsSection: some View {
-        panel(title: "状态") {
+        panel(title: text.statusSectionTitle) {
             VStack(spacing: 8) {
-                cleanRow(label: "最近事件", value: MetricFormatters.fullDate(snapshot.latestEventAt))
-                cleanRow(label: "计划", value: snapshot.planType.map(CodexSnapshot.prettyPlanName) ?? "未知")
-                cleanRow(label: "模型", value: snapshot.modelName ?? "未知")
+                cleanRow(label: text.latestEventLabel, value: MetricFormatters.fullDate(snapshot.latestEventAt, language: language))
+                cleanRow(label: text.planLabel, value: snapshot.planType.map(CodexSnapshot.prettyPlanName) ?? text.unknown)
+                cleanRow(label: text.modelLabel, value: snapshot.modelName ?? text.unknown)
             }
         }
     }
 
     private var commandBar: some View {
         HStack(spacing: 10) {
-            toolbarButton(systemImage: "folder", title: "日志", action: onOpenLogs)
-            toolbarButton(systemImage: "square.stack.3d.up.slash", title: "多开", action: onCloseOtherInstances)
-            toolbarButton(systemImage: "power", title: "退出", action: onQuit)
+            toolbarButton(systemImage: "folder", title: text.logsButtonTitle, action: onOpenLogs)
+            toolbarButton(systemImage: "square.stack.3d.up.slash", title: text.multipleInstancesButtonTitle, action: onCloseOtherInstances)
+            toolbarButton(systemImage: "power", title: text.quitButtonTitle, action: onQuit)
         }
         .padding(14)
         .background(.thinMaterial)
@@ -223,7 +238,7 @@ struct QuotaPopoverView: View {
         let input = snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.inputTokens) } ?? "--"
         let output = snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.outputTokens) } ?? "--"
         let cache = MetricFormatters.cacheRatio(snapshot.latestSessionTotalTokens) ?? "--"
-        return "输入 \(input) · 输出 \(output) · 缓存率 \(cache)"
+        return text.sessionDetail(input: input, output: output, cache: cache)
     }
 
     private func metricRow(title: String, value: String, detail: String) -> some View {

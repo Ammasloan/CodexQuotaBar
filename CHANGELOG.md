@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added a language setting with Chinese and English interface modes.
+- Updated README previews to show the current popover and menu bar item.
+
 ## 1.0.0
 
 - Initial open-source release.

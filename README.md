@@ -4,7 +4,13 @@ CodexQuotaBar is a lightweight macOS menu bar app for keeping an eye on local Co
 
 The app is designed for quick scanning: the menu bar item shows the remaining 5-hour quota, and the popover opens to the two quota windows that matter most: 5 hours and 7 days.
 
-![CodexQuotaBar preview](docs/assets/codexquotabar-preview.png)
+<p>
+  <img src="docs/assets/codexquotabar-preview.png" width="450" alt="CodexQuotaBar quota popover">
+</p>
+
+<p>
+  <img src="docs/assets/codexquotabar-menubar.png" width="104" alt="CodexQuotaBar menu bar item">
+</p>
 
 ## Features
 
@@ -13,6 +19,7 @@ The app is designed for quick scanning: the menu bar item shows the remaining 5-
 - Rolling token totals for the last 5 hours and 7 days.
 - Latest request and active-session token summaries.
 - Right-click menu with settings, refresh, log folder, single-instance cleanup, and quit.
+- Language setting with Chinese and fully English UI modes.
 - Native macOS SwiftUI UI with material/glass-style surfaces.
 - Local-only data access: no server, account token, or network request is needed to read usage.
 
@@ -49,9 +56,9 @@ swift build
 swift run CodexQuotaBar
 ```
 
-## Preview Image
+## Preview Images
 
-The README preview uses sample data and can be regenerated with:
+The README previews use sample data and can be regenerated with:
 
 ```bash
 swift scripts/render_readme_screenshot.swift

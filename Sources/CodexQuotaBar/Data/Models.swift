@@ -114,9 +114,9 @@ struct QuotaWindow: Equatable {
         return "\(Int(remainingPercent.rounded()))"
     }
 
-    func resetCountdown(from now: Date) -> String {
+    func resetCountdown(from now: Date, language: AppLanguage = .defaultLanguage) -> String {
         guard let resetAt else {
-            return "暂无"
+            return AppText(language).noData
         }
 
         let seconds = max(Int(resetAt.timeIntervalSince(now)), 0)
@@ -130,20 +130,34 @@ struct QuotaWindow: Equatable {
         return "\(minutes)m"
     }
 
-    func resetLine(from now: Date) -> String {
+    func resetLine(from now: Date, language: AppLanguage = .defaultLanguage) -> String {
         guard resetAt != nil else {
-            return "暂无重置时间"
+            switch language {
+            case .zhHans:
+                return "暂无重置时间"
+            case .english:
+                return "No reset time"
+            }
         }
 
-        return "\(resetCountdown(from: now)) 后重置"
+        switch language {
+        case .zhHans:
+            return "\(resetCountdown(from: now, language: language)) 后重置"
+        case .english:
+            return "Resets in \(resetCountdown(from: now, language: language))"
+        }
     }
 
-    var resetAbsoluteText: String {
+    func resetAbsoluteText(language: AppLanguage = .defaultLanguage) -> String {
         guard let resetAt else {
-            return "未知"
+            return AppText(language).unknown
         }
 
-        return resetAt.formatted(date: .omitted, time: .shortened)
+        let formatter = DateFormatter()
+        formatter.locale = language.locale
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter.string(from: resetAt)
     }
 }
 
@@ -182,15 +196,18 @@ struct CodexSnapshot: Equatable {
         primaryQuota.usedPercent != nil || secondaryQuota.usedPercent != nil || lastRequestTokens != nil
     }
 
-    var titleLine: String {
+    func titleLine(language: AppLanguage = .defaultLanguage) -> String {
+        let text = AppText(language)
+
         if let remaining = primaryQuota.remainingPercent {
-            return "5 小时窗口剩余 \(Int(remaining.rounded()))%"
+            return text.fiveHourWindowRemaining(Int(remaining.rounded()))
         }
 
-        return "正在等待 Codex 实时额度数据"
+        return text.waitingForLiveQuota
     }
 
-    var subtitleLine: String {
+    func subtitleLine(language: AppLanguage = .defaultLanguage) -> String {
+        let text = AppText(language)
         var parts: [String] = []
 
         if let planType, !planType.isEmpty {
@@ -202,20 +219,24 @@ struct CodexSnapshot: Equatable {
         }
 
         if let latestEventAt {
-            let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = .abbreviated
-            parts.append("更新于 \(formatter.localizedString(for: latestEventAt, relativeTo: refreshedAt))")
+            parts.append(text.updatedAt(latestEventAt, relativeTo: refreshedAt))
         }
 
-        return parts.isEmpty ? "正在读取本地 Codex 会话日志" : parts.joined(separator: "  •  ")
+        return parts.isEmpty ? text.readingLocalLogs : parts.joined(separator: "  •  ")
     }
 
-    var tooltipText: String {
+    func tooltipText(language: AppLanguage = .defaultLanguage) -> String {
+        let text = AppText(language)
+
         if let remaining = primaryQuota.remainingPercent, let used = primaryQuota.usedPercent {
-            return "5 小时额度剩余 \(Int(remaining.rounded()))%，已用 \(Int(used.rounded()))%，\(primaryQuota.resetAbsoluteText) 重置"
+            return text.quotaTooltip(
+                remaining: Int(remaining.rounded()),
+                used: Int(used.rounded()),
+                resetAt: primaryQuota.resetAbsoluteText(language: language)
+            )
         }
 
-        return "正在等待 Codex 配额数据"
+        return text.waitingForQuotaEvent
     }
 
     static func prettyPlanName(_ rawValue: String) -> String {
@@ -257,20 +278,37 @@ enum MetricFormatters {
         return "\(Int(value.rounded()))%"
     }
 
-    static func fullDate(_ date: Date?) -> String {
+    static func fullDate(_ date: Date?, language: AppLanguage = .defaultLanguage) -> String {
         guard let date else {
-            return "未知"
+            return AppText(language).unknown
         }
 
-        return date.formatted(date: .abbreviated, time: .shortened)
+        let formatter = DateFormatter()
+        formatter.locale = language.locale
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 
-    static func tokenSummary(_ totals: TokenTotals?) -> String {
+    static func tokenSummary(_ totals: TokenTotals?, language: AppLanguage = .defaultLanguage) -> String {
         guard let totals else {
-            return "暂无数据"
+            switch language {
+            case .zhHans:
+                return "暂无数据"
+            case .english:
+                return "No data"
+            }
         }
 
-        return "输入 \(abbreviatedTokens(totals.inputTokens)) · 输出 \(abbreviatedTokens(totals.outputTokens)) · 缓存 \(abbreviatedTokens(totals.cachedInputTokens))"
+        let text = AppText(language)
+        let inputOutput = text.inputOutputDetail(input: totals.inputTokens, output: totals.outputTokens)
+
+        switch language {
+        case .zhHans:
+            return "\(inputOutput) · 缓存 \(abbreviatedTokens(totals.cachedInputTokens))"
+        case .english:
+            return "\(inputOutput) · Cached \(abbreviatedTokens(totals.cachedInputTokens))"
+        }
     }
 
     static func cacheRatio(_ totals: TokenTotals?) -> String? {
