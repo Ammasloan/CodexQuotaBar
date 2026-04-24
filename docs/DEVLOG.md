@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-04-24 11:11 CST
+
+- Completed: replaced the README preview with the generated horizontal CodexQuotaBar bilingual hero image and removed the previous two separate preview references from README.
+- Modified files: `README.md`, `CHANGELOG.md`, `docs/assets/codexquotabar-preview.png`, `docs/DEVLOG.md`.
+- Tests/checks run: inspected the generated image with `view_image`; checked image dimensions with `file`; reviewed README preview markup.
+- Current result: README uses one wide bilingual product preview image.
+- Remaining issues: previous preview asset files are still present but no longer referenced; they were not deleted to avoid removing tracked assets without explicit confirmation.
+- Next step: optionally confirm deletion of unused preview assets if you want the repository asset folder fully cleaned.
+
 ## 2026-04-24 11:04 CST
 
 - Completed: replaced README showcase images with separate English and Chinese popover previews based on the latest approved screenshots.

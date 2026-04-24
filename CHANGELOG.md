@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Added a language setting with Chinese and English interface modes.
-- Updated README previews to show English and Chinese popover examples.
+- Updated the README preview to use a single bilingual product hero image.
 
 ## 1.0.0
 
