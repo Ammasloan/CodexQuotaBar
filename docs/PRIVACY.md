@@ -21,4 +21,4 @@ The app does not upload, transmit, or sync usage logs. All parsing and aggregati
 
 ## Data Stored
 
-The app stores only small user preferences through `UserDefaults`, such as refresh interval and whether duplicate instances should be closed on launch.
+The app stores only small user preferences through `UserDefaults`, such as refresh interval, language, duplicate-instance behavior, optional subscription details, and optional token-pricing settings.

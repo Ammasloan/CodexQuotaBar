@@ -14,6 +14,7 @@ final class CodexUsageStore: ObservableObject {
         preferencesObserver = NotificationCenter.default.publisher(for: AppPreferences.didChangeNotification)
             .sink { [weak self] _ in
                 self?.restartTimer()
+                self?.refreshNow()
             }
 
         refreshNow()

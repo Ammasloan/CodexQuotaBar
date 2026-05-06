@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Added a language setting with Chinese and English interface modes.
+- Added manual subscription remaining-time tracking.
+- Added configurable token pricing, cost estimates, and savings display.
 - Updated the README preview to use a single bilingual product hero image.
 
 ## 1.0.0

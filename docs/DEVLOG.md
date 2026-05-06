@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-05-06 16:45 CST
+
+- Completed: added manual subscription tracking, configurable token pricing, cost estimates, and savings/payback display in the popover.
+- Modified files: `README.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/PRIVACY.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`, `Sources/CodexQuotaBar/Data/CodexLogScanner.swift`, `Sources/CodexQuotaBar/Data/CodexUsageStore.swift`, `Sources/CodexQuotaBar/Data/Models.swift`, `Sources/CodexQuotaBar/Support/AppPreferences.swift`, `Sources/CodexQuotaBar/Support/AppText.swift`, `Sources/CodexQuotaBar/UI/QuotaPopoverView.swift`, `Sources/CodexQuotaBar/UI/SettingsView.swift`.
+- Tests/checks run: `swift build`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`; verified the built binary contains the new subscription/savings text.
+- Current result: Settings can store subscription start date, duration, cost, currency symbol, and per-1M token prices; the rebuilt local menu bar app is running and the popover shows remaining subscription time, token cost estimates, and savings when enough inputs are configured.
+- Remaining issues: subscription renewal/end dates are manual because local Codex logs do not expose reliable subscription lifecycle data.
+- Next step: manually verify the new settings sections and popover layout in the accessory app.
+
 ## 2026-04-24 11:11 CST
 
 - Completed: replaced the README preview with the generated horizontal CodexQuotaBar bilingual hero image and removed the previous two separate preview references from README.

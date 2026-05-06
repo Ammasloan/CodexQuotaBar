@@ -14,6 +14,8 @@ The app is designed for quick scanning: the menu bar item shows the remaining 5-
 - Popover dashboard for 5-hour and 7-day quota windows.
 - Rolling token totals for the last 5 hours and 7 days.
 - Latest request and active-session token summaries.
+- Optional manual subscription tracking for remaining plan time.
+- Optional token pricing estimates and subscription savings calculation.
 - Right-click menu with settings, refresh, log folder, single-instance cleanup, and quit.
 - Language setting with Chinese and fully English UI modes.
 - Native macOS SwiftUI UI with material/glass-style surfaces.
@@ -64,6 +66,15 @@ Codex writes local JSONL session logs. Some lines include `payload.type == "toke
 CodexQuotaBar scans recent session files, picks the latest rate-limit event, and aggregates recent `last_token_usage` events for rolling token totals.
 
 More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## Manual Cost Tracking
+
+OpenAI does not expose ChatGPT subscription renewal details through the local Codex logs that this app reads, so subscription tracking is manual. In Settings you can enter:
+
+- Subscription start date, duration, cost, and currency symbol.
+- Token prices per 1M uncached input, cached input, and output tokens.
+
+When both are configured, the popover estimates token-equivalent cost for recent usage and compares the current subscription cycle's token value against your plan cost.
 
 ## Privacy
 

@@ -4,6 +4,13 @@ import SwiftUI
 struct QuotaPopoverView: View {
     @ObservedObject var store: CodexUsageStore
     @AppStorage(AppPreferences.Keys.language) private var languageCode = AppLanguage.defaultLanguage.rawValue
+    @AppStorage(AppPreferences.Keys.subscriptionStartAt) private var subscriptionStartAt = Date().timeIntervalSince1970
+    @AppStorage(AppPreferences.Keys.subscriptionDurationDays) private var subscriptionDurationDays = 0.0
+    @AppStorage(AppPreferences.Keys.subscriptionCost) private var subscriptionCost = 0.0
+    @AppStorage(AppPreferences.Keys.currencySymbol) private var currencySymbol = AppPreferences.defaultCurrencySymbol
+    @AppStorage(AppPreferences.Keys.tokenInputCostPerMillion) private var tokenInputCostPerMillion = 0.0
+    @AppStorage(AppPreferences.Keys.tokenCachedInputCostPerMillion) private var tokenCachedInputCostPerMillion = 0.0
+    @AppStorage(AppPreferences.Keys.tokenOutputCostPerMillion) private var tokenOutputCostPerMillion = 0.0
 
     let onRefresh: () -> Void
     let onOpenSettings: () -> Void
@@ -23,6 +30,28 @@ struct QuotaPopoverView: View {
         AppText(language)
     }
 
+    private var subscriptionSettings: SubscriptionSettings {
+        SubscriptionSettings(
+            startDate: Date(timeIntervalSince1970: subscriptionStartAt),
+            durationDays: subscriptionDurationDays,
+            cost: subscriptionCost,
+            currencySymbol: resolvedCurrencySymbol
+        )
+    }
+
+    private var tokenPricing: TokenPricing {
+        TokenPricing(
+            inputCostPerMillion: tokenInputCostPerMillion,
+            cachedInputCostPerMillion: tokenCachedInputCostPerMillion,
+            outputCostPerMillion: tokenOutputCostPerMillion
+        )
+    }
+
+    private var resolvedCurrencySymbol: String {
+        let trimmed = currencySymbol.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? AppPreferences.defaultCurrencySymbol : trimmed
+    }
+
     private var fiveHourAccent: Color {
         Color(nsColor: RingImageRenderer.statusColor(for: snapshot.primaryQuota.remainingPercent))
     }
@@ -37,6 +66,9 @@ struct QuotaPopoverView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     quotaSection
+                    if subscriptionSettings.isConfigured {
+                        subscriptionSection
+                    }
                     usageSection
                     detailsSection
                 }
@@ -47,7 +79,7 @@ struct QuotaPopoverView: View {
             hairline
             commandBar
         }
-        .frame(width: 440, height: 560)
+        .frame(width: 440, height: 600)
         .background {
             ZStack {
                 Rectangle()
@@ -191,9 +223,10 @@ struct QuotaPopoverView: View {
                 metricRow(
                     title: text.recentFiveHourTokensTitle,
                     value: MetricFormatters.abbreviatedTokens(snapshot.fiveHourTokens.totalTokens),
-                    detail: text.inputOutputDetail(
+                    detail: text.tokenDetailWithCost(
                         input: snapshot.fiveHourTokens.inputTokens,
-                        output: snapshot.fiveHourTokens.outputTokens
+                        output: snapshot.fiveHourTokens.outputTokens,
+                        cost: costLabel(for: snapshot.fiveHourTokens)
                     )
                 )
 
@@ -201,7 +234,11 @@ struct QuotaPopoverView: View {
                     title: text.latestRequestTitle,
                     value: snapshot.lastRequestTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? text.noData,
                     detail: snapshot.lastRequestTokens.map {
-                        text.inputOutputDetail(input: $0.inputTokens, output: $0.outputTokens)
+                        text.tokenDetailWithCost(
+                            input: $0.inputTokens,
+                            output: $0.outputTokens,
+                            cost: costLabel(for: $0)
+                        )
                     } ?? text.waitingForRequestData
                 )
 
@@ -210,6 +247,40 @@ struct QuotaPopoverView: View {
                     value: snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.totalTokens) } ?? text.noData,
                     detail: sessionDetailText
                 )
+
+                if let savingsMetric {
+                    metricRow(
+                        title: savingsMetric.title,
+                        value: savingsMetric.value,
+                        detail: savingsMetric.detail
+                    )
+                }
+            }
+        }
+    }
+
+    private var subscriptionSection: some View {
+        panel(title: text.subscriptionPanelTitle) {
+            VStack(spacing: 8) {
+                metricRow(
+                    title: text.subscriptionRemainingTitle,
+                    value: subscriptionRemainingValue,
+                    detail: text.subscriptionRemainingDetail(
+                        endsAt: MetricFormatters.fullDate(subscriptionSettings.endDate, language: language),
+                        cost: MetricFormatters.money(subscriptionSettings.cost, symbol: resolvedCurrencySymbol)
+                    )
+                )
+
+                if tokenPricing.isConfigured {
+                    metricRow(
+                        title: text.subscriptionValueLabel,
+                        value: MetricFormatters.money(subscriptionCycleValue, symbol: resolvedCurrencySymbol),
+                        detail: text.inputOutputDetail(
+                            input: snapshot.subscriptionCycleTokens.inputTokens,
+                            output: snapshot.subscriptionCycleTokens.outputTokens
+                        )
+                    )
+                }
             }
         }
     }
@@ -238,7 +309,45 @@ struct QuotaPopoverView: View {
         let input = snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.inputTokens) } ?? "--"
         let output = snapshot.latestSessionTotalTokens.map { MetricFormatters.abbreviatedTokens($0.outputTokens) } ?? "--"
         let cache = MetricFormatters.cacheRatio(snapshot.latestSessionTotalTokens) ?? "--"
-        return text.sessionDetail(input: input, output: output, cache: cache)
+        let cost = snapshot.latestSessionTotalTokens.flatMap { costLabel(for: $0) }
+        return text.sessionDetailWithCost(input: input, output: output, cache: cache, cost: cost)
+    }
+
+    private var subscriptionRemainingValue: String {
+        let remaining = subscriptionSettings.remainingInterval(at: snapshot.refreshedAt)
+        guard remaining > 0 else {
+            return text.expired
+        }
+
+        return MetricFormatters.compactDuration(remaining, language: language)
+    }
+
+    private var subscriptionCycleValue: Double {
+        tokenPricing.cost(for: snapshot.subscriptionCycleTokens)
+    }
+
+    private var savingsMetric: (title: String, value: String, detail: String)? {
+        guard subscriptionSettings.isConfigured, tokenPricing.isConfigured else {
+            return nil
+        }
+
+        let cycleValue = subscriptionCycleValue
+        let savings = cycleValue - subscriptionSettings.cost
+        let title = savings >= 0 ? text.savingsTitle : text.paybackTitle
+        let value = "\(MetricFormatters.money(abs(savings), symbol: resolvedCurrencySymbol)) \(MetricFormatters.savingsEmoji(savings))"
+        let detail = text.savingsDetail(
+            cycleValue: MetricFormatters.money(cycleValue, symbol: resolvedCurrencySymbol),
+            planCost: MetricFormatters.money(subscriptionSettings.cost, symbol: resolvedCurrencySymbol)
+        )
+        return (title, value, detail)
+    }
+
+    private func costLabel(for totals: TokenTotals) -> String? {
+        guard tokenPricing.isConfigured else {
+            return nil
+        }
+
+        return MetricFormatters.money(tokenPricing.cost(for: totals), symbol: resolvedCurrencySymbol)
     }
 
     private func metricRow(title: String, value: String, detail: String) -> some View {

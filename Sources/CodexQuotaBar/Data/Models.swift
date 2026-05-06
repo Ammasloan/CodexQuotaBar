@@ -172,6 +172,7 @@ struct CodexSnapshot: Equatable {
     let latestSessionTotalTokens: TokenTotals?
     let fiveHourTokens: TokenTotals
     let sevenDayTokens: TokenTotals
+    let subscriptionCycleTokens: TokenTotals
     let trackedFileCount: Int
     let trackedEventCount: Int
     let message: String?
@@ -187,6 +188,7 @@ struct CodexSnapshot: Equatable {
         latestSessionTotalTokens: nil,
         fiveHourTokens: .zero,
         sevenDayTokens: .zero,
+        subscriptionCycleTokens: .zero,
         trackedFileCount: 0,
         trackedEventCount: 0,
         message: "正在等待 ~/.codex/sessions 里的 Codex 配额事件"
@@ -317,5 +319,65 @@ enum MetricFormatters {
         }
 
         return "\(Int((ratio * 100).rounded()))%"
+    }
+
+    static func money(_ value: Double, symbol: String) -> String {
+        let absolute = abs(value)
+        let prefix = value < 0 ? "-" : ""
+
+        if absolute >= 1_000 {
+            return "\(prefix)\(symbol)\(String(format: "%.0f", absolute))"
+        }
+
+        if absolute >= 100 {
+            return "\(prefix)\(symbol)\(String(format: "%.1f", absolute))"
+        }
+
+        return "\(prefix)\(symbol)\(String(format: "%.2f", absolute))"
+    }
+
+    static func compactDuration(_ interval: TimeInterval, language: AppLanguage) -> String {
+        let seconds = max(Int(interval), 0)
+        let days = seconds / 86_400
+        let hours = (seconds % 86_400) / 3_600
+        let minutes = (seconds % 3_600) / 60
+
+        switch language {
+        case .zhHans:
+            if days > 0 {
+                return "\(days) 天 \(hours) 小时"
+            }
+
+            if hours > 0 {
+                return "\(hours) 小时 \(minutes) 分钟"
+            }
+
+            return "\(minutes) 分钟"
+        case .english:
+            if days > 0 {
+                return "\(days)d \(hours)h"
+            }
+
+            if hours > 0 {
+                return "\(hours)h \(minutes)m"
+            }
+
+            return "\(minutes)m"
+        }
+    }
+
+    static func savingsEmoji(_ savings: Double) -> String {
+        switch savings {
+        case ..<0:
+            return "😐"
+        case 0..<10:
+            return "🙂"
+        case 10..<50:
+            return "😄"
+        case 50..<100:
+            return "😁"
+        default:
+            return "🤩"
+        }
     }
 }

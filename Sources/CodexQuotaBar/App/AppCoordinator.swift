@@ -73,7 +73,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     }
 
     private func configurePopover() {
-        popover.contentSize = NSSize(width: 440, height: 560)
+        popover.contentSize = NSSize(width: 440, height: 600)
         popover.behavior = .semitransient
         popover.animates = true
         popover.contentViewController = hostingController
@@ -220,7 +220,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             let hostingController = NSHostingController(rootView: rootView)
             let window = NSWindow(contentViewController: hostingController)
             window.title = text.settingsWindowTitle
-            window.setContentSize(NSSize(width: 440, height: 390))
+            window.setContentSize(NSSize(width: 500, height: 660))
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.titlebarAppearsTransparent = true
             window.toolbarStyle = .preference
@@ -229,7 +229,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         }
 
         settingsWindowController?.window?.title = text.settingsWindowTitle
-        settingsWindowController?.window?.setContentSize(NSSize(width: 440, height: 390))
+        settingsWindowController?.window?.setContentSize(NSSize(width: 500, height: 660))
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)

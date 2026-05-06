@@ -16,7 +16,8 @@ CodexQuotaBar is a small Swift Package executable that runs as a macOS menu bar 
 3. The scanner decodes only `token_count` event lines.
 4. The latest rate-limit event drives the 5-hour and 7-day quota UI.
 5. Recent `last_token_usage` events are summed for rolling 5-hour and 7-day token totals.
-6. SwiftUI views observe the store and update the menu bar item and popover.
+6. If manual subscription settings are configured, events since the configured subscription start date are summed for cycle-level cost estimates.
+7. SwiftUI views observe the store and update the menu bar item and popover.
 
 ## UI Behavior
 
@@ -25,6 +26,7 @@ CodexQuotaBar is a small Swift Package executable that runs as a macOS menu bar 
 - Clicking outside the popover closes it via local/global event monitoring.
 - Launching the app can terminate other `CodexQuotaBar` instances to avoid duplicate menu bar icons.
 - The language setting is stored in `UserDefaults` and updates the popover, settings window, context menu, and tooltip text.
+- Manual subscription and token-pricing settings are stored in `UserDefaults`; they are local-only estimates and are not read from a subscription API.
 
 ## Build Output
 

@@ -201,6 +201,90 @@ struct AppText {
         }
     }
 
+    var subscriptionSettingsSectionTitle: String {
+        switch language {
+        case .zhHans: "订阅"
+        case .english: "Subscription"
+        }
+    }
+
+    var subscriptionStartDateLabel: String {
+        switch language {
+        case .zhHans: "开始日期"
+        case .english: "Start Date"
+        }
+    }
+
+    var subscriptionDurationDaysLabel: String {
+        switch language {
+        case .zhHans: "订阅时长"
+        case .english: "Duration"
+        }
+    }
+
+    var subscriptionCostLabel: String {
+        switch language {
+        case .zhHans: "订阅费用"
+        case .english: "Plan Cost"
+        }
+    }
+
+    var currencySymbolLabel: String {
+        switch language {
+        case .zhHans: "货币符号"
+        case .english: "Currency Symbol"
+        }
+    }
+
+    var subscriptionSettingsExplanation: String {
+        switch language {
+        case .zhHans: "用于计算本次订阅剩余时间，以及和 token 等价花费对比后的节省金额。"
+        case .english: "Used to show remaining subscription time and compare plan cost with token-equivalent value."
+        }
+    }
+
+    var tokenPricingSectionTitle: String {
+        switch language {
+        case .zhHans: "Token 计费"
+        case .english: "Token Pricing"
+        }
+    }
+
+    var inputTokenPriceLabel: String {
+        switch language {
+        case .zhHans: "输入单价"
+        case .english: "Input Price"
+        }
+    }
+
+    var cachedInputTokenPriceLabel: String {
+        switch language {
+        case .zhHans: "缓存输入单价"
+        case .english: "Cached Input Price"
+        }
+    }
+
+    var outputTokenPriceLabel: String {
+        switch language {
+        case .zhHans: "输出单价"
+        case .english: "Output Price"
+        }
+    }
+
+    var tokenPricingExplanation: String {
+        switch language {
+        case .zhHans: "按每 1M token 的价格填写。成本估算会使用未缓存输入、缓存输入和输出 token。"
+        case .english: "Enter prices per 1M tokens. Estimates use uncached input, cached input, and output tokens."
+        }
+    }
+
+    var pricePerMillionSuffix: String {
+        switch language {
+        case .zhHans: "/ 1M token"
+        case .english: "/ 1M tokens"
+        }
+    }
+
     var behaviorSectionTitle: String {
         switch language {
         case .zhHans: "行为"
@@ -285,6 +369,76 @@ struct AppText {
         }
     }
 
+    var subscriptionPanelTitle: String {
+        switch language {
+        case .zhHans: "订阅状态"
+        case .english: "Subscription"
+        }
+    }
+
+    var subscriptionRemainingTitle: String {
+        switch language {
+        case .zhHans: "本次订阅剩余"
+        case .english: "Time Remaining"
+        }
+    }
+
+    var subscriptionEndsLabel: String {
+        switch language {
+        case .zhHans: "到期"
+        case .english: "Ends"
+        }
+    }
+
+    var subscriptionValueLabel: String {
+        switch language {
+        case .zhHans: "本周期 token 等价"
+        case .english: "Cycle Token Value"
+        }
+    }
+
+    var savingsTitle: String {
+        switch language {
+        case .zhHans: "已省金额"
+        case .english: "Estimated Savings"
+        }
+    }
+
+    var paybackTitle: String {
+        switch language {
+        case .zhHans: "距离回本"
+        case .english: "Until Break-even"
+        }
+    }
+
+    var tokenCostLabel: String {
+        switch language {
+        case .zhHans: "成本"
+        case .english: "Cost"
+        }
+    }
+
+    var planCostLabel: String {
+        switch language {
+        case .zhHans: "订阅费用"
+        case .english: "Plan cost"
+        }
+    }
+
+    var cycleValueLabel: String {
+        switch language {
+        case .zhHans: "本周期价值"
+        case .english: "Cycle value"
+        }
+    }
+
+    var expired: String {
+        switch language {
+        case .zhHans: "已结束"
+        case .english: "Expired"
+        }
+    }
+
     func languageName(for option: AppLanguage) -> String {
         switch option {
         case .zhHans:
@@ -340,6 +494,38 @@ struct AppText {
         switch language {
         case .zhHans: "输入 \(input) · 输出 \(output) · 缓存率 \(cache)"
         case .english: "Input \(input) · Output \(output) · Cache \(cache)"
+        }
+    }
+
+    func tokenDetailWithCost(input: Int, output: Int, cost: String?) -> String {
+        let base = inputOutputDetail(input: input, output: output)
+        guard let cost else {
+            return base
+        }
+
+        return "\(base) · \(tokenCostLabel) \(cost)"
+    }
+
+    func sessionDetailWithCost(input: String, output: String, cache: String, cost: String?) -> String {
+        let base = sessionDetail(input: input, output: output, cache: cache)
+        guard let cost else {
+            return base
+        }
+
+        return "\(base) · \(tokenCostLabel) \(cost)"
+    }
+
+    func subscriptionRemainingDetail(endsAt: String, cost: String) -> String {
+        switch language {
+        case .zhHans: "\(subscriptionEndsLabel) \(endsAt) · \(planCostLabel) \(cost)"
+        case .english: "\(subscriptionEndsLabel) \(endsAt) · \(planCostLabel) \(cost)"
+        }
+    }
+
+    func savingsDetail(cycleValue: String, planCost: String) -> String {
+        switch language {
+        case .zhHans: "\(cycleValueLabel) \(cycleValue) · \(planCostLabel) \(planCost)"
+        case .english: "\(cycleValueLabel) \(cycleValue) · \(planCostLabel) \(planCost)"
         }
     }
 

@@ -85,7 +85,11 @@ final class CodexLogScanner {
     }
 
     func loadSnapshot(now: Date = Date()) -> CodexSnapshot {
-        let recentFiles = recentSessionFiles(since: now.addingTimeInterval(-14 * 24 * 60 * 60))
+        let subscriptionSettings = AppPreferences.subscriptionSettings
+        let subscriptionStartDate = subscriptionSettings.isConfigured ? subscriptionSettings.startDate : nil
+        let defaultCutoff = now.addingTimeInterval(-14 * 24 * 60 * 60)
+        let fileCutoff = [defaultCutoff, subscriptionStartDate].compactMap(\.self).min() ?? defaultCutoff
+        let recentFiles = recentSessionFiles(since: fileCutoff)
 
         guard !recentFiles.isEmpty else {
             return CodexSnapshot.empty
@@ -98,6 +102,7 @@ final class CodexLogScanner {
         var latestInfoEvent: SessionTokenCountEvent?
         var fiveHourTokens = TokenTotals.zero
         var sevenDayTokens = TokenTotals.zero
+        var subscriptionCycleTokens = TokenTotals.zero
         var trackedFiles = 0
         var trackedEvents = 0
 
@@ -119,6 +124,12 @@ final class CodexLogScanner {
 
                     if event.timestamp >= sevenDaysAgo {
                         sevenDayTokens = sevenDayTokens.adding(info)
+                    }
+
+                    if let subscriptionStartDate,
+                       event.timestamp >= subscriptionStartDate,
+                       event.timestamp <= now {
+                        subscriptionCycleTokens = subscriptionCycleTokens.adding(info)
                     }
                 }
 
@@ -160,6 +171,7 @@ final class CodexLogScanner {
             latestSessionTotalTokens: latestInfoEvent?.payload.info?.totalTokenUsage,
             fiveHourTokens: fiveHourTokens,
             sevenDayTokens: sevenDayTokens,
+            subscriptionCycleTokens: subscriptionCycleTokens,
             trackedFileCount: trackedFiles,
             trackedEventCount: trackedEvents,
             message: trackedEvents == 0 ? "最近的会话日志里还没有找到 token_count 事件" : nil
