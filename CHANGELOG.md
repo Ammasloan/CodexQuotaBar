@@ -7,7 +7,7 @@
 - Restyled the popover with an OpenUsage-inspired left rail and status layout.
 - Tuned the popover proportions into a narrower vertical menu-bar panel.
 - Updated the menu bar ring to surface the enabled monitor with the lowest 5-hour quota remaining.
-- Improved quota freshness by refreshing before opening the popover and running the periodic refresh timer in common run-loop modes.
+- Improved quota freshness by refreshing before opening the popover and running the periodic refresh on a dispatch timer outside the UI run loop.
 - Added manual subscription remaining-time tracking.
 - Added configurable token pricing, cost estimates, and savings display.
 - Updated the README preview to use a single bilingual product hero image.

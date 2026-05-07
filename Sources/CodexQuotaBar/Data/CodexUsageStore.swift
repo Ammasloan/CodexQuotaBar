@@ -10,7 +10,8 @@ final class CodexUsageStore: ObservableObject {
     }
 
     private let refreshQueue = DispatchQueue(label: "codex.quota.refresh", qos: .userInitiated)
-    private var refreshTimer: Timer?
+    private let timerQueue = DispatchQueue(label: "codex.quota.refresh.timer", qos: .utility)
+    private var refreshTimer: DispatchSourceTimer?
     private var isRefreshing = false
     private var preferencesObserver: AnyCancellable?
 
@@ -26,7 +27,7 @@ final class CodexUsageStore: ObservableObject {
     }
 
     func stop() {
-        refreshTimer?.invalidate()
+        refreshTimer?.cancel()
         refreshTimer = nil
         preferencesObserver = nil
     }
@@ -56,14 +57,17 @@ final class CodexUsageStore: ObservableObject {
     }
 
     private func restartTimer() {
-        refreshTimer?.invalidate()
+        refreshTimer?.cancel()
 
-        let timer = Timer(timeInterval: AppPreferences.refreshInterval, repeats: true) { [weak self] _ in
+        let interval = AppPreferences.refreshInterval
+        let timer = DispatchSource.makeTimerSource(queue: timerQueue)
+        timer.schedule(deadline: .now() + interval, repeating: interval, leeway: .seconds(1))
+        timer.setEventHandler { [weak self] in
             Task { @MainActor [weak self] in
                 self?.refreshNow()
             }
         }
-        RunLoop.main.add(timer, forMode: .common)
         refreshTimer = timer
+        timer.resume()
     }
 }

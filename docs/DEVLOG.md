@@ -1,5 +1,16 @@
 # Development Log
 
+## 2026-05-07 20:52 CST
+
+- Completed: investigated a second mismatch where the menu bar stayed at `93%` while the latest local logs had moved to about `87%` remaining.
+- Completed: confirmed the latest default Codex log event had `primary.used_percent = 13.0`, meaning the stale value came from the app refresh path rather than the scanner formula.
+- Completed: replaced the run-loop-based refresh timer with a `DispatchSourceTimer` so periodic status-bar refreshes are not dependent on menu/popover UI run-loop state.
+- Modified files: `CHANGELOG.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/Data/CodexUsageStore.swift`.
+- Tests/checks run: `swift build`; `git diff --check`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`.
+- Current result: the rebuilt app starts from the latest parsed local event and should continue refreshing independently of the UI run loop.
+- Remaining issues: automated reading of the macOS LSUIElement menu-bar title is blocked by accessibility/automation limits, so final visual confirmation needs a manual glance at the menu bar.
+- Next step: if any mismatch remains, add an explicit on-screen data timestamp/debug row so we can distinguish stale local logs from stale app state instantly.
+
 ## 2026-05-07 20:20 CST
 
 - Completed: investigated a reported mismatch where the menu bar showed `96%` while the live quota display showed about `94%`.
