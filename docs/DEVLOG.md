@@ -1,5 +1,15 @@
 # Development Log
 
+## 2026-05-07 21:39 CST
+
+- Completed: investigated the case where `debug-status.json` already reported `80%` while the visible menu bar could still appear stale.
+- Completed: forced status item redraws by updating the attributed title, explicit width, intrinsic content size, layout, and display together on every status update.
+- Modified files: `CHANGELOG.md`, `docs/DEVLOG.md`, `docs/PRIVACY.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`.
+- Tests/checks run: `swift build`; `git diff --check`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`; verified `debug-status.json` reports `statusTitle: 80%`; captured a desktop screenshot showing the menu bar also displays `80%`.
+- Current result: both app debug state and the visible macOS menu bar agree on the current `80%` status.
+- Remaining issues: if visible state ever disagrees again, compare against `~/Library/Application Support/CodexQuotaBar/debug-status.json` first to separate app state from macOS rendering.
+- Next step: keep the debug status file while quota refresh stabilizes; optionally hide it behind a setting later.
+
 ## 2026-05-07 21:17 CST
 
 - Completed: diagnosed the remaining stale quota issue as a scanner performance bug, not a display formula bug.

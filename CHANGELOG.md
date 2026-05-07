@@ -9,6 +9,7 @@
 - Updated the menu bar ring to surface the enabled monitor with the lowest 5-hour quota remaining.
 - Improved quota freshness by refreshing before opening the popover and running the periodic refresh with a Swift concurrency sleep loop outside the UI run loop.
 - Reworked log scanning to use faster byte-level parsing over recent active logs and added a local debug status file for verifying the live menu-bar value.
+- Forced menu-bar status item redraws by updating attributed title, width, layout, and display together.
 - Added manual subscription remaining-time tracking.
 - Added configurable token pricing, cost estimates, and savings display.
 - Updated the README preview to use a single bilingual product hero image.

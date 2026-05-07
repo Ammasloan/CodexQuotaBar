@@ -101,14 +101,26 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         }
 
         let snapshot = monitor?.snapshot ?? .empty
+        let title = snapshot.primaryQuota.compactRemainingLabel
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.labelColor,
+        ]
+
         button.image = RingImageRenderer.makeStatusImage(for: snapshot)
-        button.title = snapshot.primaryQuota.compactRemainingLabel
+        button.font = font
+        button.title = title
+        button.attributedTitle = NSAttributedString(string: title, attributes: attributes)
+        button.imagePosition = .imageLeft
+        button.imageScaling = .scaleProportionallyDown
         if let monitor {
             button.toolTip = "\(monitor.target.name)\n\(snapshot.tooltipText(language: AppPreferences.language))"
         } else {
             button.toolTip = snapshot.tooltipText(language: AppPreferences.language)
         }
-        writeDebugStatus(monitor: monitor, snapshot: snapshot, statusTitle: button.title)
+        forceStatusItemRedraw(button: button, title: title, attributes: attributes)
+        writeDebugStatus(monitor: monitor, snapshot: snapshot, statusTitle: title)
     }
 
     private func applyLocalizedChrome() {
@@ -122,6 +134,21 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             let rhsRemaining = rhs.snapshot.primaryQuota.remainingPercent ?? Double.greatestFiniteMagnitude
             return lhsRemaining < rhsRemaining
         }
+    }
+
+    private func forceStatusItemRedraw(
+        button: NSStatusBarButton,
+        title: String,
+        attributes: [NSAttributedString.Key: Any]
+    ) {
+        let titleWidth = ceil((title as NSString).size(withAttributes: attributes).width)
+        statusItem.length = max(42, titleWidth + 28)
+        button.invalidateIntrinsicContentSize()
+        button.needsLayout = true
+        button.layoutSubtreeIfNeeded()
+        button.needsDisplay = true
+        button.displayIfNeeded()
+        button.window?.displayIfNeeded()
     }
 
     private func writeDebugStatus(monitor: MonitorSnapshot?, snapshot: CodexSnapshot, statusTitle: String) {
