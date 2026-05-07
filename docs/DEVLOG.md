@@ -1,5 +1,17 @@
 # Development Log
 
+## 2026-05-07 21:17 CST
+
+- Completed: diagnosed the remaining stale quota issue as a scanner performance bug, not a display formula bug.
+- Completed: confirmed the old scanner could spend minutes in `CodexLogScanner.tokenEvents(from:)` parsing large JSONL files with Swift string search, leaving the menu-bar value stale.
+- Completed: changed scanner parsing to byte-level `Data` search, cached timestamp parsing per scanner instance, and limited refresh scans to recently active log files so current quota updates quickly.
+- Completed: added `~/Library/Application Support/CodexQuotaBar/debug-status.json`, written on every menu-bar update, to verify the value the running app actually sent to the status item.
+- Modified files: `CHANGELOG.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`, `Sources/CodexQuotaBar/Data/CodexLogScanner.swift`.
+- Tests/checks run: `swift build`; `git diff --check`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`; verified debug status updated from `--` to `83%`; waited one refresh cycle and confirmed the debug file refreshed again while CPU stayed at `0%`.
+- Current result: running app PID `73232` reports `statusTitle: 83%`, `usedPercent: 17`, and latest event `2026-05-07T13:17:21.068Z` in the debug status file.
+- Remaining issues: 30-day/subscription cost totals now prioritize recently active logs during frequent refreshes; if exact long-horizon accounting matters, add a separate cached background aggregate pass.
+- Next step: if the visible macOS menu bar still disagrees with `debug-status.json`, investigate status-item rendering/caching rather than log scanning.
+
 ## 2026-05-07 20:52 CST
 
 - Completed: investigated a second mismatch where the menu bar stayed at `93%` while the latest local logs had moved to about `87%` remaining.

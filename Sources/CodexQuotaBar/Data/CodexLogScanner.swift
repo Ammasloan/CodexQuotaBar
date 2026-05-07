@@ -1,7 +1,7 @@
 import Foundation
 
 private struct SessionTokenCountEvent: Decodable {
-    let timestamp: Date
+    let timestamp: String
     let type: String
     let payload: TokenCountPayload
 }
@@ -62,6 +62,16 @@ private struct RateLimitWindow: Decodable {
     }
 }
 
+private struct SessionFileInfo {
+    let url: URL
+    let modificationDate: Date
+}
+
+private struct ParsedTokenCountEvent {
+    let timestamp: Date
+    let payload: TokenCountPayload
+}
+
 final class CodexLogScanner {
     static let defaultSessionsRoot = URL(fileURLWithPath: NSString(string: "~/.codex/sessions").expandingTildeInPath)
     static let defaultConfigURL = URL(fileURLWithPath: NSString(string: "~/.codex/config.toml").expandingTildeInPath)
@@ -70,29 +80,27 @@ final class CodexLogScanner {
     private let decoder: JSONDecoder
     private let sessionsRoot: URL
     private let configURL: URL
+    private let fractionalFormatter: ISO8601DateFormatter
+    private let plainFormatter: ISO8601DateFormatter
+    private let eventMessageNeedle = Array(#""type":"event_msg""#.utf8)
+    private let tokenCountNeedle = Array(#""type":"token_count""#.utf8)
 
     init(sessionsRoot: URL = defaultSessionsRoot, configURL: URL = defaultConfigURL) {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let rawValue = try container.decode(String.self)
-
-            if let date = Self.parseTimestamp(rawValue) {
-                return date
-            }
-
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported timestamp: \(rawValue)")
-        }
-        self.decoder = decoder
+        self.decoder = JSONDecoder()
         self.sessionsRoot = sessionsRoot
         self.configURL = configURL
+        let fractionalFormatter = ISO8601DateFormatter()
+        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        self.fractionalFormatter = fractionalFormatter
+        let plainFormatter = ISO8601DateFormatter()
+        plainFormatter.formatOptions = [.withInternetDateTime]
+        self.plainFormatter = plainFormatter
     }
 
     func loadSnapshot(now: Date = Date()) -> CodexSnapshot {
         let subscriptionSettings = AppPreferences.subscriptionSettings
         let subscriptionStartDate = subscriptionSettings.isConfigured ? subscriptionSettings.startDate : nil
-        let defaultCutoff = now.addingTimeInterval(-30 * 24 * 60 * 60)
-        let fileCutoff = [defaultCutoff, subscriptionStartDate].compactMap(\.self).min() ?? defaultCutoff
+        let fileCutoff = now.addingTimeInterval(-7 * 24 * 60 * 60)
         let recentFiles = recentSessionFiles(since: fileCutoff)
 
         guard !recentFiles.isEmpty else {
@@ -106,8 +114,8 @@ final class CodexLogScanner {
         let todayStart = calendar.startOfDay(for: now)
         let yesterdayStart = calendar.date(byAdding: .day, value: -1, to: todayStart) ?? todayStart.addingTimeInterval(-24 * 60 * 60)
 
-        var latestRateEvent: SessionTokenCountEvent?
-        var latestInfoEvent: SessionTokenCountEvent?
+        var latestRateEvent: ParsedTokenCountEvent?
+        var latestInfoEvent: ParsedTokenCountEvent?
         var fiveHourTokens = TokenTotals.zero
         var sevenDayTokens = TokenTotals.zero
         var todayTokens = TokenTotals.zero
@@ -170,10 +178,14 @@ final class CodexLogScanner {
         let modelName = readDefaultModelName()
         let primaryWindow = latestRateEvent?.payload.rateLimits?.primary
         let secondaryWindow = latestRateEvent?.payload.rateLimits?.secondary
+        let latestTimestamp = max(
+            latestRateEvent?.timestamp ?? .distantPast,
+            latestInfoEvent?.timestamp ?? .distantPast
+        )
 
         return CodexSnapshot(
             refreshedAt: now,
-            latestEventAt: max(latestRateEvent?.timestamp ?? .distantPast, latestInfoEvent?.timestamp ?? .distantPast) == .distantPast ? nil : max(latestRateEvent?.timestamp ?? .distantPast, latestInfoEvent?.timestamp ?? .distantPast),
+            latestEventAt: latestTimestamp == .distantPast ? nil : latestTimestamp,
             modelName: modelName,
             planType: planType,
             primaryQuota: QuotaWindow(
@@ -211,7 +223,7 @@ final class CodexLogScanner {
             return []
         }
 
-        var urls: [URL] = []
+        var files: [SessionFileInfo] = []
 
         for case let url as URL in enumerator {
             guard url.pathExtension == "jsonl" else {
@@ -224,40 +236,67 @@ final class CodexLogScanner {
                 continue
             }
 
-            if let modificationDate = values?.contentModificationDate, modificationDate < cutoff {
+            guard let modificationDate = values?.contentModificationDate else {
                 continue
             }
 
-            urls.append(url)
+            if modificationDate < cutoff {
+                continue
+            }
+
+            files.append(SessionFileInfo(url: url, modificationDate: modificationDate))
         }
 
-        return urls
+        return files
+            .sorted { lhs, rhs in lhs.modificationDate > rhs.modificationDate }
+            .map(\.url)
     }
 
-    private func tokenEvents(from fileURL: URL) -> [SessionTokenCountEvent] {
-        guard let contents = try? String(contentsOf: fileURL, encoding: .utf8) else {
+    private func tokenEvents(from fileURL: URL) -> [ParsedTokenCountEvent] {
+        guard let contents = try? Data(contentsOf: fileURL, options: [.mappedIfSafe]) else {
             return []
         }
 
-        var events: [SessionTokenCountEvent] = []
+        var events: [ParsedTokenCountEvent] = []
         events.reserveCapacity(64)
 
-        for line in contents.split(whereSeparator: \.isNewline) {
-            guard line.contains("\"type\":\"event_msg\""), line.contains("\"type\":\"token_count\"") else {
+        for line in contents.split(separator: 10) {
+            guard contains(eventMessageNeedle, in: line),
+                  contains(tokenCountNeedle, in: line) else {
                 continue
             }
 
-            guard let data = line.data(using: .utf8),
-                  let event = try? decoder.decode(SessionTokenCountEvent.self, from: data),
+            guard let event = try? decoder.decode(SessionTokenCountEvent.self, from: Data(line)),
                   event.type == "event_msg",
-                  event.payload.type == "token_count" else {
+                  event.payload.type == "token_count",
+                  let timestamp = parseTimestamp(event.timestamp) else {
                 continue
             }
 
-            events.append(event)
+            events.append(ParsedTokenCountEvent(timestamp: timestamp, payload: event.payload))
         }
 
         return events
+    }
+
+    private func contains(_ needle: [UInt8], in haystack: Data.SubSequence) -> Bool {
+        guard !needle.isEmpty, haystack.count >= needle.count else {
+            return false
+        }
+
+        var matched = 0
+        for byte in haystack {
+            if byte == needle[matched] {
+                matched += 1
+                if matched == needle.count {
+                    return true
+                }
+            } else {
+                matched = byte == needle[0] ? 1 : 0
+            }
+        }
+
+        return false
     }
 
     private func readDefaultModelName() -> String? {
@@ -280,16 +319,11 @@ final class CodexLogScanner {
         return nil
     }
 
-    private static func parseTimestamp(_ rawValue: String) -> Date? {
-        let fractionalFormatter = ISO8601DateFormatter()
-        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
+    private func parseTimestamp(_ rawValue: String) -> Date? {
         if let date = fractionalFormatter.date(from: rawValue) {
             return date
         }
 
-        let plainFormatter = ISO8601DateFormatter()
-        plainFormatter.formatOptions = [.withInternetDateTime]
         return plainFormatter.date(from: rawValue)
     }
 }

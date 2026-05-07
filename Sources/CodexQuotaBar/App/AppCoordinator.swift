@@ -108,6 +108,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         } else {
             button.toolTip = snapshot.tooltipText(language: AppPreferences.language)
         }
+        writeDebugStatus(monitor: monitor, snapshot: snapshot, statusTitle: button.title)
     }
 
     private func applyLocalizedChrome() {
@@ -121,6 +122,31 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             let rhsRemaining = rhs.snapshot.primaryQuota.remainingPercent ?? Double.greatestFiniteMagnitude
             return lhsRemaining < rhsRemaining
         }
+    }
+
+    private func writeDebugStatus(monitor: MonitorSnapshot?, snapshot: CodexSnapshot, statusTitle: String) {
+        let directory = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/CodexQuotaBar", isDirectory: true)
+        let url = directory.appendingPathComponent("debug-status.json")
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let payload: [String: Any] = [
+            "pid": ProcessInfo.processInfo.processIdentifier,
+            "appPath": Bundle.main.bundlePath,
+            "statusTitle": statusTitle,
+            "monitorName": monitor?.target.name ?? NSNull(),
+            "remainingPercent": snapshot.primaryQuota.remainingPercent ?? NSNull(),
+            "usedPercent": snapshot.primaryQuota.usedPercent ?? NSNull(),
+            "latestEventAt": snapshot.latestEventAt.map { formatter.string(from: $0) } ?? NSNull(),
+            "refreshedAt": formatter.string(from: snapshot.refreshedAt),
+        ]
+
+        guard let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]) else {
+            return
+        }
+
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? data.write(to: url, options: .atomic)
     }
 
     private func openLogsFolder(for target: MonitorTarget? = nil) {
