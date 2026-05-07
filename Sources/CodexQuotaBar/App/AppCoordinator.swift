@@ -73,7 +73,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
     }
 
     private func configurePopover() {
-        popover.contentSize = NSSize(width: 640, height: 760)
+        popover.contentSize = NSSize(width: 500, height: 760)
         popover.behavior = .semitransient
         popover.animates = true
         popover.contentViewController = hostingController

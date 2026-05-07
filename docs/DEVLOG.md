@@ -1,5 +1,14 @@
 # Development Log
 
+## 2026-05-07 19:32 CST
+
+- Completed: narrowed the OpenUsage-style popover from `640x760` to `500x760` and compacted the rail, typography, padding, and footer spacing.
+- Modified files: `CHANGELOG.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`, `Sources/CodexQuotaBar/UI/QuotaPopoverView.swift`.
+- Tests/checks run: `swift build`; `git diff --check`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`.
+- Current result: the popover now reads as a taller menu-bar panel instead of a wide dashboard.
+- Remaining issues: visual confirmation still depends on manually opening the LSUIElement menu-bar popover.
+- Next step: tune individual rows if any user-specific labels feel cramped at the narrower width.
+
 ## 2026-05-07 19:22 CST
 
 - Completed: restyled the popover toward the referenced OpenUsage layout with a left monitor rail, dark status progress bars, compact credits/cost stats, and footer actions.

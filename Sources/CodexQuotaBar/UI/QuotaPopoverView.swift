@@ -82,7 +82,7 @@ struct QuotaPopoverView: View {
                 emptyState
             }
         }
-        .frame(width: 640, height: 760)
+        .frame(width: 500, height: 760)
         .background(Color.white.opacity(0.98))
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -97,7 +97,7 @@ struct QuotaPopoverView: View {
     }
 
     private var sidebar: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 15) {
             ForEach(monitorSnapshots) { monitor in
                 monitorButton(monitor)
             }
@@ -112,8 +112,8 @@ struct QuotaPopoverView: View {
                 onOpenSettings()
             }
         }
-        .padding(.vertical, 28)
-        .frame(width: 72)
+        .padding(.vertical, 26)
+        .frame(width: 60)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.50))
     }
 
@@ -128,14 +128,14 @@ struct QuotaPopoverView: View {
                 if isSelected {
                     Capsule()
                         .fill(Color.primary)
-                        .frame(width: 3, height: 38)
-                        .offset(x: -15)
+                        .frame(width: 3, height: 36)
+                        .offset(x: -11)
                 }
 
                 Image(systemName: monitor.target.systemImage)
-                    .font(.system(size: 23, weight: .semibold))
+                    .font(.system(size: 21, weight: .semibold))
                     .foregroundStyle(isSelected ? color : color.opacity(0.58))
-                    .frame(width: 44, height: 44)
+                    .frame(width: 40, height: 40)
                     .contentShape(Rectangle())
             }
         }
@@ -146,9 +146,9 @@ struct QuotaPopoverView: View {
     private func railIcon(systemImage: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: 24, weight: .medium))
+                .font(.system(size: 22, weight: .medium))
                 .foregroundStyle(color)
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -156,10 +156,10 @@ struct QuotaPopoverView: View {
 
     private func content(for monitor: MonitorSnapshot) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: 22) {
                 header(for: monitor)
 
-                VStack(spacing: 24) {
+                VStack(spacing: 22) {
                     quotaLine(title: text.sessionQuotaTitle, quota: monitor.snapshot.primaryQuota)
                     quotaLine(title: text.weeklyQuotaTitle, quota: monitor.snapshot.secondaryQuota)
 
@@ -177,8 +177,8 @@ struct QuotaPopoverView: View {
 
                 footer(for: monitor)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 28)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 26)
         }
         .scrollIndicators(.never)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -188,7 +188,7 @@ struct QuotaPopoverView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 Text(monitor.target.name)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -196,8 +196,8 @@ struct QuotaPopoverView: View {
 
                 Text(monitor.snapshot.planType.map(CodexSnapshot.prettyPlanName) ?? text.unknown)
                     .font(.system(size: 18, weight: .semibold))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
                     .background(
                         Capsule()
                             .fill(Color.white)
@@ -209,7 +209,7 @@ struct QuotaPopoverView: View {
                     )
             }
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 topButton(title: text.statusButtonTitle, systemImage: "arrow.up.right.square", action: onRefresh)
                 topButton(title: text.usageDashboardButtonTitle, systemImage: "arrow.up.right.square", action: onOpenSettings)
             }
@@ -220,8 +220,8 @@ struct QuotaPopoverView: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
                 .labelStyle(.titleAndIcon)
-                .font(.system(size: 15, weight: .semibold))
-                .padding(.horizontal, 14)
+                .font(.system(size: 14, weight: .semibold))
+                .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -249,11 +249,11 @@ struct QuotaPopoverView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Text(title)
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(.primary)
                 Circle()
                     .fill(Color.green)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 9, height: 9)
             }
 
             GeometryReader { proxy in
@@ -276,7 +276,7 @@ struct QuotaPopoverView: View {
                 Spacer()
                 Text(rightLabel)
             }
-            .font(.system(size: 18, weight: .medium))
+            .font(.system(size: 16, weight: .medium))
             .foregroundStyle(.secondary)
             .monospacedDigit()
         }
@@ -285,7 +285,7 @@ struct QuotaPopoverView: View {
     private func creditsSection(for snapshot: CodexSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             Text(text.creditsTitle)
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
 
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
@@ -303,7 +303,7 @@ struct QuotaPopoverView: View {
                 Spacer()
                 Text(subscriptionSettings.isConfigured ? MetricFormatters.money(subscriptionSettings.cost, symbol: resolvedCurrencySymbol) : text.noData)
             }
-            .font(.system(size: 18, weight: .medium))
+            .font(.system(size: 16, weight: .medium))
             .foregroundStyle(.secondary)
 
             VStack(spacing: 8) {
@@ -324,7 +324,7 @@ struct QuotaPopoverView: View {
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
         }
-        .font(.system(size: 17, weight: .medium))
+        .font(.system(size: 15, weight: .medium))
     }
 
     private func footer(for monitor: MonitorSnapshot) -> some View {
@@ -336,10 +336,10 @@ struct QuotaPopoverView: View {
                 Spacer()
                 Text("\(text.nextUpdatePrefix) \(Int(AppPreferences.refreshInterval))s")
             }
-            .font(.system(size: 17, weight: .medium))
+            .font(.system(size: 15, weight: .medium))
             .foregroundStyle(.secondary)
 
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 footerButton(systemImage: "folder", title: text.logsButtonTitle) {
                     onOpenLogs(monitor.target)
                 }
