@@ -20,7 +20,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             store: store,
             onRefresh: { [weak self] in self?.store.refreshNow() },
             onOpenSettings: { [weak self] in self?.openSettings() },
-            onOpenLogs: { [weak self] in self?.openLogsFolder() },
+            onOpenLogs: { [weak self] target in self?.openLogsFolder(for: target) },
             onCloseOtherInstances: { [weak self] in self?.terminateOtherInstances() },
             onQuit: { NSApp.terminate(nil) }
         )
@@ -69,21 +69,21 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         button.imageScaling = .scaleProportionallyDown
         button.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
         button.setAccessibilityLabel("Codex quota bar")
-        updateStatusItem(with: store.snapshot)
+        updateStatusItem(with: representativeStatusMonitor(from: store.monitorSnapshots))
     }
 
     private func configurePopover() {
-        popover.contentSize = NSSize(width: 440, height: 600)
+        popover.contentSize = NSSize(width: 640, height: 760)
         popover.behavior = .semitransient
         popover.animates = true
         popover.contentViewController = hostingController
     }
 
     private func bindStore() {
-        store.$snapshot
+        store.$monitorSnapshots
             .receive(on: RunLoop.main)
-            .sink { [weak self] snapshot in
-                self?.updateStatusItem(with: snapshot)
+            .sink { [weak self] snapshots in
+                self?.updateStatusItem(with: self?.representativeStatusMonitor(from: snapshots))
             }
             .store(in: &cancellables)
 
@@ -95,23 +95,37 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             .store(in: &cancellables)
     }
 
-    private func updateStatusItem(with snapshot: CodexSnapshot) {
+    private func updateStatusItem(with monitor: MonitorSnapshot?) {
         guard let button = statusItem.button else {
             return
         }
 
+        let snapshot = monitor?.snapshot ?? .empty
         button.image = RingImageRenderer.makeStatusImage(for: snapshot)
         button.title = snapshot.primaryQuota.compactRemainingLabel
-        button.toolTip = snapshot.tooltipText(language: AppPreferences.language)
+        if let monitor {
+            button.toolTip = "\(monitor.target.name)\n\(snapshot.tooltipText(language: AppPreferences.language))"
+        } else {
+            button.toolTip = snapshot.tooltipText(language: AppPreferences.language)
+        }
     }
 
     private func applyLocalizedChrome() {
-        updateStatusItem(with: store.snapshot)
+        updateStatusItem(with: representativeStatusMonitor(from: store.monitorSnapshots))
         settingsWindowController?.window?.title = text.settingsWindowTitle
     }
 
-    private func openLogsFolder() {
-        NSWorkspace.shared.open(CodexLogScanner.sessionsRoot)
+    private func representativeStatusMonitor(from snapshots: [MonitorSnapshot]) -> MonitorSnapshot? {
+        snapshots.min { lhs, rhs in
+            let lhsRemaining = lhs.snapshot.primaryQuota.remainingPercent ?? Double.greatestFiniteMagnitude
+            let rhsRemaining = rhs.snapshot.primaryQuota.remainingPercent ?? Double.greatestFiniteMagnitude
+            return lhsRemaining < rhsRemaining
+        }
+    }
+
+    private func openLogsFolder(for target: MonitorTarget? = nil) {
+        let url = target?.sessionsURL ?? AppPreferences.monitorTargets.first?.sessionsURL ?? CodexLogScanner.defaultSessionsRoot
+        NSWorkspace.shared.open(url)
     }
 
     @objc
@@ -220,7 +234,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             let hostingController = NSHostingController(rootView: rootView)
             let window = NSWindow(contentViewController: hostingController)
             window.title = text.settingsWindowTitle
-            window.setContentSize(NSSize(width: 500, height: 660))
+            window.setContentSize(NSSize(width: 620, height: 760))
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.titlebarAppearsTransparent = true
             window.toolbarStyle = .preference
@@ -229,7 +243,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
         }
 
         settingsWindowController?.window?.title = text.settingsWindowTitle
-        settingsWindowController?.window?.setContentSize(NSSize(width: 500, height: 660))
+        settingsWindowController?.window?.setContentSize(NSSize(width: 620, height: 760))
         NSApp.activate(ignoringOtherApps: true)
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)

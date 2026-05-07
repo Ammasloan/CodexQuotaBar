@@ -208,6 +208,153 @@ struct AppText {
         }
     }
 
+    var monitorsSectionTitle: String {
+        switch language {
+        case .zhHans: "监控目标"
+        case .english: "Monitors"
+        }
+    }
+
+    var monitorsExplanation: String {
+        switch language {
+        case .zhHans: "每个目标可以指向一套 Codex 会话日志和配置文件。适合多账号、多 agent 或多份本地 Codex 数据。"
+        case .english: "Each target can point to its own Codex session logs and config file for multiple accounts, agents, or local data folders."
+        }
+    }
+
+    var enabledLabel: String {
+        switch language {
+        case .zhHans: "启用"
+        case .english: "Enabled"
+        }
+    }
+
+    var monitorNameLabel: String {
+        switch language {
+        case .zhHans: "名称"
+        case .english: "Name"
+        }
+    }
+
+    var monitorIconLabel: String {
+        switch language {
+        case .zhHans: "图标"
+        case .english: "Icon"
+        }
+    }
+
+    var monitorColorLabel: String {
+        switch language {
+        case .zhHans: "颜色"
+        case .english: "Color"
+        }
+    }
+
+    var monitorSessionsPathLabel: String {
+        switch language {
+        case .zhHans: "会话日志目录"
+        case .english: "Sessions Folder"
+        }
+    }
+
+    var monitorConfigPathLabel: String {
+        switch language {
+        case .zhHans: "配置文件"
+        case .english: "Config File"
+        }
+    }
+
+    var addMonitorTitle: String {
+        switch language {
+        case .zhHans: "添加监控目标"
+        case .english: "Add Monitor"
+        }
+    }
+
+    var removeMonitorTitle: String {
+        switch language {
+        case .zhHans: "删除"
+        case .english: "Remove"
+        }
+    }
+
+    var resetMonitorsTitle: String {
+        switch language {
+        case .zhHans: "恢复默认 Codex 目标"
+        case .english: "Reset Default Codex Target"
+        }
+    }
+
+    var noMonitorData: String {
+        switch language {
+        case .zhHans: "没有启用的监控目标"
+        case .english: "No enabled monitors"
+        }
+    }
+
+    var statusButtonTitle: String {
+        switch language {
+        case .zhHans: "状态"
+        case .english: "Status"
+        }
+    }
+
+    var usageDashboardButtonTitle: String {
+        switch language {
+        case .zhHans: "用量面板"
+        case .english: "Usage dashboard"
+        }
+    }
+
+    var sessionQuotaTitle: String {
+        switch language {
+        case .zhHans: "Session"
+        case .english: "Session"
+        }
+    }
+
+    var weeklyQuotaTitle: String {
+        switch language {
+        case .zhHans: "Weekly"
+        case .english: "Weekly"
+        }
+    }
+
+    var creditsTitle: String {
+        switch language {
+        case .zhHans: "成本与节省"
+        case .english: "Credits"
+        }
+    }
+
+    var todayLabel: String {
+        switch language {
+        case .zhHans: "今天"
+        case .english: "Today"
+        }
+    }
+
+    var yesterdayLabel: String {
+        switch language {
+        case .zhHans: "昨天"
+        case .english: "Yesterday"
+        }
+    }
+
+    var lastThirtyDaysLabel: String {
+        switch language {
+        case .zhHans: "最近 30 天"
+        case .english: "Last 30 Days"
+        }
+    }
+
+    var nextUpdatePrefix: String {
+        switch language {
+        case .zhHans: "下次更新"
+        case .english: "Next update"
+        }
+    }
+
     var subscriptionStartDateLabel: String {
         switch language {
         case .zhHans: "开始日期"

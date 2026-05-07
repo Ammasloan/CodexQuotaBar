@@ -33,6 +33,7 @@ enum AppPreferences {
         static let refreshInterval = "refreshInterval"
         static let autoCloseOtherInstances = "autoCloseOtherInstances"
         static let language = "language"
+        static let monitorTargets = "monitorTargets"
         static let subscriptionStartAt = "subscriptionStartAt"
         static let subscriptionDurationDays = "subscriptionDurationDays"
         static let subscriptionCost = "subscriptionCost"
@@ -52,6 +53,7 @@ enum AppPreferences {
             Keys.refreshInterval: defaultRefreshInterval,
             Keys.autoCloseOtherInstances: true,
             Keys.language: AppLanguage.defaultLanguage.rawValue,
+            Keys.monitorTargets: defaultMonitorTargetsJSON,
             Keys.subscriptionStartAt: Date().timeIntervalSince1970,
             Keys.subscriptionDurationDays: 0.0,
             Keys.subscriptionCost: 0.0,
@@ -73,6 +75,28 @@ enum AppPreferences {
 
     static var language: AppLanguage {
         AppLanguage.resolved(UserDefaults.standard.string(forKey: Keys.language))
+    }
+
+    static var monitorTargets: [MonitorTarget] {
+        get {
+            guard let rawValue = UserDefaults.standard.string(forKey: Keys.monitorTargets),
+                  let data = rawValue.data(using: .utf8),
+                  let targets = try? JSONDecoder().decode([MonitorTarget].self, from: data),
+                  !targets.isEmpty else {
+                return defaultMonitorTargets
+            }
+
+            return targets
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue),
+                  let rawValue = String(data: data, encoding: .utf8) else {
+                return
+            }
+
+            UserDefaults.standard.set(rawValue, forKey: Keys.monitorTargets)
+            notifyDidChange()
+        }
     }
 
     static var subscriptionSettings: SubscriptionSettings {
@@ -100,6 +124,59 @@ enum AppPreferences {
 
     static func notifyDidChange() {
         NotificationCenter.default.post(name: didChangeNotification, object: nil)
+    }
+
+    static var defaultMonitorTargets: [MonitorTarget] {
+        [
+            MonitorTarget(
+                id: "default-codex",
+                name: "Codex",
+                systemImage: "speedometer",
+                colorHex: "#111827",
+                sessionsPath: CodexLogScanner.defaultSessionsRoot.path,
+                configPath: CodexLogScanner.defaultConfigURL.path,
+                isEnabled: true
+            )
+        ]
+    }
+
+    private static var defaultMonitorTargetsJSON: String {
+        guard let data = try? JSONEncoder().encode(defaultMonitorTargets),
+              let rawValue = String(data: data, encoding: .utf8) else {
+            return "[]"
+        }
+
+        return rawValue
+    }
+}
+
+struct MonitorTarget: Codable, Equatable, Identifiable {
+    let id: String
+    var name: String
+    var systemImage: String
+    var colorHex: String
+    var sessionsPath: String
+    var configPath: String
+    var isEnabled: Bool
+
+    static func makeCustom(index: Int) -> MonitorTarget {
+        MonitorTarget(
+            id: UUID().uuidString,
+            name: "Agent \(index)",
+            systemImage: "sparkle",
+            colorHex: "#C06B43",
+            sessionsPath: CodexLogScanner.defaultSessionsRoot.path,
+            configPath: CodexLogScanner.defaultConfigURL.path,
+            isEnabled: true
+        )
+    }
+
+    var sessionsURL: URL {
+        URL(fileURLWithPath: NSString(string: sessionsPath).expandingTildeInPath)
+    }
+
+    var configURL: URL {
+        URL(fileURLWithPath: NSString(string: configPath).expandingTildeInPath)
     }
 }
 

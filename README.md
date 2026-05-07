@@ -11,14 +11,16 @@ The app is designed for quick scanning: the menu bar item shows the remaining 5-
 ## Features
 
 - Menu bar ring icon with remaining 5-hour quota.
-- Popover dashboard for 5-hour and 7-day quota windows.
+- OpenUsage-inspired popover with a left rail for multiple monitored accounts or agents.
+- Configurable monitor targets with custom name, icon, color, sessions folder, and config file.
+- Popover dashboard for session and weekly quota windows.
 - Rolling token totals for the last 5 hours and 7 days.
 - Latest request and active-session token summaries.
 - Optional manual subscription tracking for remaining plan time.
 - Optional token pricing estimates and subscription savings calculation.
 - Right-click menu with settings, refresh, log folder, single-instance cleanup, and quit.
 - Language setting with Chinese and fully English UI modes.
-- Native macOS SwiftUI UI with material/glass-style surfaces.
+- Native macOS SwiftUI UI with a compact OpenUsage-inspired status layout.
 - Local-only data access: no server, account token, or network request is needed to read usage.
 
 ## Requirements
@@ -27,7 +29,7 @@ The app is designed for quick scanning: the menu bar item shows the remaining 5-
 - Swift 6.2 or newer for building from source.
 - Codex desktop/CLI usage logs under `~/.codex/sessions`.
 
-The liquid-glass visual polish uses newer SwiftUI APIs when the host macOS supports them, with a material fallback on older supported systems.
+The popover is intentionally compact and status-first, with a left rail for switching configured monitors.
 
 ## Build
 
@@ -66,6 +68,17 @@ Codex writes local JSONL session logs. Some lines include `payload.type == "toke
 CodexQuotaBar scans recent session files, picks the latest rate-limit event, and aggregates recent `last_token_usage` events for rolling token totals.
 
 More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## Multiple Monitors
+
+Settings includes a Monitors section. Each monitor points to a Codex sessions folder and config file, so you can track separate local Codex accounts, agent folders, or copied log directories side by side.
+
+When multiple monitors are enabled, the menu bar ring surfaces the target with the lowest 5-hour quota remaining so the tightest limit is visible at a glance.
+
+The default monitor reads:
+
+- `~/.codex/sessions`
+- `~/.codex/config.toml`
 
 ## Manual Cost Tracking
 

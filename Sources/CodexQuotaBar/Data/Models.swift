@@ -172,6 +172,9 @@ struct CodexSnapshot: Equatable {
     let latestSessionTotalTokens: TokenTotals?
     let fiveHourTokens: TokenTotals
     let sevenDayTokens: TokenTotals
+    let todayTokens: TokenTotals
+    let yesterdayTokens: TokenTotals
+    let thirtyDayTokens: TokenTotals
     let subscriptionCycleTokens: TokenTotals
     let trackedFileCount: Int
     let trackedEventCount: Int
@@ -188,6 +191,9 @@ struct CodexSnapshot: Equatable {
         latestSessionTotalTokens: nil,
         fiveHourTokens: .zero,
         sevenDayTokens: .zero,
+        todayTokens: .zero,
+        yesterdayTokens: .zero,
+        thirtyDayTokens: .zero,
         subscriptionCycleTokens: .zero,
         trackedFileCount: 0,
         trackedEventCount: 0,
@@ -254,6 +260,15 @@ struct CodexSnapshot: Equatable {
         }
     }
 
+}
+
+struct MonitorSnapshot: Identifiable, Equatable {
+    let target: MonitorTarget
+    let snapshot: CodexSnapshot
+
+    var id: String {
+        target.id
+    }
 }
 
 enum MetricFormatters {

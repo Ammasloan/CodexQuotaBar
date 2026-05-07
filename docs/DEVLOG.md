@@ -1,5 +1,16 @@
 # Development Log
 
+## 2026-05-07 19:22 CST
+
+- Completed: restyled the popover toward the referenced OpenUsage layout with a left monitor rail, dark status progress bars, compact credits/cost stats, and footer actions.
+- Completed: added configurable monitor targets for multiple local accounts or agents, including name, SF Symbol icon, color, sessions folder, config file, and enabled state.
+- Completed: made the menu bar ring display the enabled monitor with the lowest 5-hour quota remaining.
+- Modified files: `README.md`, `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/PRIVACY.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`, `Sources/CodexQuotaBar/Data/CodexLogScanner.swift`, `Sources/CodexQuotaBar/Data/CodexUsageStore.swift`, `Sources/CodexQuotaBar/Data/Models.swift`, `Sources/CodexQuotaBar/Support/AppPreferences.swift`, `Sources/CodexQuotaBar/Support/AppText.swift`, `Sources/CodexQuotaBar/UI/QuotaPopoverView.swift`, `Sources/CodexQuotaBar/UI/SettingsView.swift`.
+- Tests/checks run: `swift build`; `./scripts/build_app.sh`; relaunched `dist/CodexQuotaBar.app`.
+- Current result: the rebuilt app can switch between enabled monitor targets in the popover and Settings can customize which targets are monitored.
+- Remaining issues: each monitor currently reads Codex-style local JSONL logs; non-Codex agents need compatible log folders or a future adapter.
+- Next step: manually inspect the larger popover layout from the menu bar and tune spacing if any local data row overflows.
+
 ## 2026-05-06 16:45 CST
 
 - Completed: added manual subscription tracking, configurable token pricing, cost estimates, and savings/payback display in the popover.

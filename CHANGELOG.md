@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Added a language setting with Chinese and English interface modes.
+- Added configurable multi-monitor targets for multiple local accounts or agents.
+- Restyled the popover with an OpenUsage-inspired left rail and status layout.
+- Updated the menu bar ring to surface the enabled monitor with the lowest 5-hour quota remaining.
 - Added manual subscription remaining-time tracking.
 - Added configurable token pricing, cost estimates, and savings display.
 - Updated the README preview to use a single bilingual product hero image.

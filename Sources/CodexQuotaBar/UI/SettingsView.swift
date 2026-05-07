@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.Keys.tokenInputCostPerMillion) private var tokenInputCostPerMillion = 0.0
     @AppStorage(AppPreferences.Keys.tokenCachedInputCostPerMillion) private var tokenCachedInputCostPerMillion = 0.0
     @AppStorage(AppPreferences.Keys.tokenOutputCostPerMillion) private var tokenOutputCostPerMillion = 0.0
+    @State private var monitorTargets = AppPreferences.monitorTargets
 
     let onCloseOtherInstances: () -> Void
     let onOpenLogs: () -> Void
@@ -54,6 +55,28 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
 
                 Text(text.languageExplanation)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section(text.monitorsSectionTitle) {
+                ForEach($monitorTargets) { $target in
+                    monitorEditor(target: $target)
+                }
+
+                HStack {
+                    Button(text.addMonitorTitle) {
+                        monitorTargets.append(MonitorTarget.makeCustom(index: monitorTargets.count + 1))
+                    }
+
+                    Spacer()
+
+                    Button(text.resetMonitorsTitle) {
+                        monitorTargets = AppPreferences.defaultMonitorTargets
+                    }
+                }
+
+                Text(text.monitorsExplanation)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -146,6 +169,51 @@ struct SettingsView: View {
         }
         .onChange(of: tokenOutputCostPerMillion) { _ in
             AppPreferences.notifyDidChange()
+        }
+        .onChange(of: monitorTargets) { newValue in
+            AppPreferences.monitorTargets = newValue
+        }
+    }
+
+    private func monitorEditor(target: Binding<MonitorTarget>) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(text.enabledLabel, isOn: target.isEnabled)
+
+            textSettingRow(label: text.monitorNameLabel, value: target.name)
+            textSettingRow(label: text.monitorIconLabel, value: target.systemImage)
+            textSettingRow(label: text.monitorColorLabel, value: target.colorHex)
+
+            pathSettingRow(label: text.monitorSessionsPathLabel, value: target.sessionsPath)
+            pathSettingRow(label: text.monitorConfigPathLabel, value: target.configPath)
+
+            if monitorTargets.count > 1 {
+                Button(role: .destructive) {
+                    monitorTargets.removeAll { $0.id == target.wrappedValue.id }
+                } label: {
+                    Text(text.removeMonitorTitle)
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func textSettingRow(label: String, value: Binding<String>) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            TextField("", text: value)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 230)
+        }
+    }
+
+    private func pathSettingRow(label: String, value: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label)
+                .foregroundStyle(.secondary)
+            TextField("", text: value)
+                .font(.system(.caption, design: .monospaced))
         }
     }
 

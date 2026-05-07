@@ -3,7 +3,11 @@ import Foundation
 
 @MainActor
 final class CodexUsageStore: ObservableObject {
-    @Published private(set) var snapshot = CodexSnapshot.empty
+    @Published private(set) var monitorSnapshots: [MonitorSnapshot] = []
+
+    var snapshot: CodexSnapshot {
+        monitorSnapshots.first?.snapshot ?? .empty
+    }
 
     private let refreshQueue = DispatchQueue(label: "codex.quota.refresh", qos: .userInitiated)
     private var refreshTimer: Timer?
@@ -35,10 +39,17 @@ final class CodexUsageStore: ObservableObject {
         isRefreshing = true
 
         refreshQueue.async {
-            let snapshot = CodexLogScanner().loadSnapshot()
+            let targets = AppPreferences.monitorTargets.filter(\.isEnabled)
+            let snapshots = targets.map { target in
+                let snapshot = CodexLogScanner(
+                    sessionsRoot: target.sessionsURL,
+                    configURL: target.configURL
+                ).loadSnapshot()
+                return MonitorSnapshot(target: target, snapshot: snapshot)
+            }
 
             Task { @MainActor [weak self] in
-                self?.snapshot = snapshot
+                self?.monitorSnapshots = snapshots
                 self?.isRefreshing = false
             }
         }

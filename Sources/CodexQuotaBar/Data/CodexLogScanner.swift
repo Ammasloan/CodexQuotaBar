@@ -63,13 +63,15 @@ private struct RateLimitWindow: Decodable {
 }
 
 final class CodexLogScanner {
-    static let sessionsRoot = URL(fileURLWithPath: NSString(string: "~/.codex/sessions").expandingTildeInPath)
-    static let configURL = URL(fileURLWithPath: NSString(string: "~/.codex/config.toml").expandingTildeInPath)
+    static let defaultSessionsRoot = URL(fileURLWithPath: NSString(string: "~/.codex/sessions").expandingTildeInPath)
+    static let defaultConfigURL = URL(fileURLWithPath: NSString(string: "~/.codex/config.toml").expandingTildeInPath)
 
     private let fileManager = FileManager.default
     private let decoder: JSONDecoder
+    private let sessionsRoot: URL
+    private let configURL: URL
 
-    init() {
+    init(sessionsRoot: URL = defaultSessionsRoot, configURL: URL = defaultConfigURL) {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -82,12 +84,14 @@ final class CodexLogScanner {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported timestamp: \(rawValue)")
         }
         self.decoder = decoder
+        self.sessionsRoot = sessionsRoot
+        self.configURL = configURL
     }
 
     func loadSnapshot(now: Date = Date()) -> CodexSnapshot {
         let subscriptionSettings = AppPreferences.subscriptionSettings
         let subscriptionStartDate = subscriptionSettings.isConfigured ? subscriptionSettings.startDate : nil
-        let defaultCutoff = now.addingTimeInterval(-14 * 24 * 60 * 60)
+        let defaultCutoff = now.addingTimeInterval(-30 * 24 * 60 * 60)
         let fileCutoff = [defaultCutoff, subscriptionStartDate].compactMap(\.self).min() ?? defaultCutoff
         let recentFiles = recentSessionFiles(since: fileCutoff)
 
@@ -97,11 +101,18 @@ final class CodexLogScanner {
 
         let fiveHoursAgo = now.addingTimeInterval(-5 * 60 * 60)
         let sevenDaysAgo = now.addingTimeInterval(-7 * 24 * 60 * 60)
+        let thirtyDaysAgo = now.addingTimeInterval(-30 * 24 * 60 * 60)
+        let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: now)
+        let yesterdayStart = calendar.date(byAdding: .day, value: -1, to: todayStart) ?? todayStart.addingTimeInterval(-24 * 60 * 60)
 
         var latestRateEvent: SessionTokenCountEvent?
         var latestInfoEvent: SessionTokenCountEvent?
         var fiveHourTokens = TokenTotals.zero
         var sevenDayTokens = TokenTotals.zero
+        var todayTokens = TokenTotals.zero
+        var yesterdayTokens = TokenTotals.zero
+        var thirtyDayTokens = TokenTotals.zero
         var subscriptionCycleTokens = TokenTotals.zero
         var trackedFiles = 0
         var trackedEvents = 0
@@ -124,6 +135,16 @@ final class CodexLogScanner {
 
                     if event.timestamp >= sevenDaysAgo {
                         sevenDayTokens = sevenDayTokens.adding(info)
+                    }
+
+                    if event.timestamp >= todayStart {
+                        todayTokens = todayTokens.adding(info)
+                    } else if event.timestamp >= yesterdayStart && event.timestamp < todayStart {
+                        yesterdayTokens = yesterdayTokens.adding(info)
+                    }
+
+                    if event.timestamp >= thirtyDaysAgo {
+                        thirtyDayTokens = thirtyDayTokens.adding(info)
                     }
 
                     if let subscriptionStartDate,
@@ -171,6 +192,9 @@ final class CodexLogScanner {
             latestSessionTotalTokens: latestInfoEvent?.payload.info?.totalTokenUsage,
             fiveHourTokens: fiveHourTokens,
             sevenDayTokens: sevenDayTokens,
+            todayTokens: todayTokens,
+            yesterdayTokens: yesterdayTokens,
+            thirtyDayTokens: thirtyDayTokens,
             subscriptionCycleTokens: subscriptionCycleTokens,
             trackedFileCount: trackedFiles,
             trackedEventCount: trackedEvents,
@@ -180,7 +204,7 @@ final class CodexLogScanner {
 
     private func recentSessionFiles(since cutoff: Date) -> [URL] {
         guard let enumerator = fileManager.enumerator(
-            at: Self.sessionsRoot,
+            at: sessionsRoot,
             includingPropertiesForKeys: [.isRegularFileKey, .contentModificationDateKey],
             options: [.skipsHiddenFiles]
         ) else {
@@ -237,7 +261,7 @@ final class CodexLogScanner {
     }
 
     private func readDefaultModelName() -> String? {
-        guard let contents = try? String(contentsOf: Self.configURL, encoding: .utf8) else {
+        guard let contents = try? String(contentsOf: configURL, encoding: .utf8) else {
             return nil
         }
 
