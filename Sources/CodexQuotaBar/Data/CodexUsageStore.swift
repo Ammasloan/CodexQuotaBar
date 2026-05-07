@@ -58,10 +58,12 @@ final class CodexUsageStore: ObservableObject {
     private func restartTimer() {
         refreshTimer?.invalidate()
 
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: AppPreferences.refreshInterval, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: AppPreferences.refreshInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.refreshNow()
             }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        refreshTimer = timer
     }
 }

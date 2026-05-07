@@ -150,6 +150,7 @@ final class AppCoordinator: NSObject, NSMenuDelegate {
             popover.performClose(sender)
             stopOutsideClickMonitoring()
         } else {
+            store.refreshNow()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.becomeKey()
             startOutsideClickMonitoring()

@@ -1,5 +1,16 @@
 # Development Log
 
+## 2026-05-07 20:20 CST
+
+- Completed: investigated a reported mismatch where the menu bar showed `96%` while the live quota display showed about `94%`.
+- Completed: confirmed the app uses local `token_count` log events, and the latest parsed local event during investigation showed `primary.used_percent = 7.0`, or `93%` remaining.
+- Completed: improved freshness by refreshing before showing the popover and adding the periodic refresh timer to the run loop's `.common` modes.
+- Modified files: `CHANGELOG.md`, `docs/DEVLOG.md`, `Sources/CodexQuotaBar/App/AppCoordinator.swift`, `Sources/CodexQuotaBar/Data/CodexUsageStore.swift`.
+- Tests/checks run: `swift build`; `git diff --check`.
+- Current result: opening the menu bar popover now forces a fresh log scan, and the timer is less likely to pause during menu/popover event tracking.
+- Remaining issues: CodexQuotaBar still reads local logs only, so it can lag behind any server-side UI until Codex writes the next local `token_count` event.
+- Next step: consider showing a small "data age" hint in the menu bar tooltip if stale-data confusion continues.
+
 ## 2026-05-07 19:32 CST
 
 - Completed: narrowed the OpenUsage-style popover from `640x760` to `500x760` and compacted the rail, typography, padding, and footer spacing.
